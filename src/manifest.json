@@ -5,7 +5,7 @@
   "appid": "__UNI__DELTA_MATCH__",
   "description": "三角洲行动玩家组队匹配",
   "h5": {
-    "title": "三角 · 组队实验室"
+    "title": "寻找在线合拍玩家"
   },
   "mp-weixin": {
     "appid": "",
@@ -13,7 +13,7 @@
       "urlCheck": false
     }
   },
-  "name": "三角洲组队岛",
+  "name": "在线组队",
   "transformPx": false,
   "versionCode": 1,
   "versionName": "0.1.0",

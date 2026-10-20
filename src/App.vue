@@ -7,25 +7,22 @@ export default {
 <style>
 /* ===== 设计语言：森绿 × 行动橙 × 米纸（复刻自演示页 space-2）===== */
 page {
-  --bg: #f3f0e8;
-  --panel: #fffdf7;
-  --panel-2: #ebe7dc;
-  --ink: #172018;
-  --muted: #5d675f;
-  --line: #c9c9be;
-  --green: #1b4d3e;
-  --green-2: #286952;
-  --orange: #eb5d27;
-  --orange-2: #ff7845;
+  --bg: #090d13;
+  --panel: #121923;
+  --panel-2: #1b2431;
+  --ink: #e9eef5;
+  --muted: #91a0b4;
+  --line: #293444;
+  --green: #203d39;
+  --green-2: #9ee8c0;
+  --orange: #b9f477;
+  --orange-2: #d0ff9a;
   --cyan: #0d7180;
   --yellow: #f5c647;
   --danger: #b5332b;
   --hard: #2b231e;
   background-color: var(--bg);
-  /* 32px 纸质网格纹理 */
-  background-image: linear-gradient(rgba(30, 61, 48, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30, 61, 48, 0.06) 1px, transparent 1px);
-  background-size: 64rpx 64rpx;
+  background-image: radial-gradient(ellipse at 80% 0%, rgba(64,94,94,.13), transparent 50%);
   color: var(--ink);
   font-size: 28rpx;
   font-family: 'Noto Sans SC', -apple-system, sans-serif;
@@ -567,4 +564,6 @@ button::after {
     animation: none !important;
   }
 }
+
+page {color-scheme:dark}button{border-radius:10px;color:var(--ink)}button::after{border-radius:10px}.btn-primary{background:var(--orange);color:#12200d;border-radius:10px;box-shadow:none}.btn-primary::after{display:none}.btn-secondary{border-radius:10px}.muted{color:var(--muted)}input,textarea{color:var(--ink)}input::placeholder,textarea::placeholder{color:#7c8ca1}picker .uni-picker-container{color:#e9eef5}picker .uni-picker-action, picker .uni-picker-content{background:#17202c;color:#e9eef5}
 </style>

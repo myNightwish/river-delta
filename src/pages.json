@@ -1,17 +1,18 @@
 {
   "globalStyle": {
-    "backgroundColor": "#f3f0e8",
-    "backgroundColorBottom": "#f3f0e8",
-    "backgroundColorTop": "#1b4d3e",
-    "navigationBarBackgroundColor": "#1b4d3e",
+    "backgroundColor": "#090d13",
+    "backgroundColorBottom": "#090d13",
+    "backgroundColorTop": "#090d13",
+    "navigationBarBackgroundColor": "#090d13",
     "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "三角洲组队岛"
+    "navigationBarTitleText": "在线组队"
   },
   "pages": [
     {
       "path": "pages/pilot/pilot",
       "style": {
-        "navigationBarTitleText": "三角 · 找队友"
+        "navigationBarTitleText": "寻找在线合拍玩家",
+        "navigationStyle": "custom"
       }
     },
     {
