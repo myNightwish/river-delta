@@ -1,1 +1,54 @@
-{"globalStyle":{"backgroundColor":"#f3f0e8","backgroundColorBottom":"#f3f0e8","backgroundColorTop":"#1b4d3e","navigationBarBackgroundColor":"#1b4d3e","navigationBarTextStyle":"white","navigationBarTitleText":"三角洲组队岛"},"pages":[{"path":"pages/island/island","style":{"navigationBarTitleText":"组队岛"}},{"path":"pages/login/login","style":{"navigationBarTitleText":"登录"}},{"path":"pages/profile/profile","style":{"navigationBarTitleText":"我的档案"}},{"path":"pages/team/team","style":{"navigationBarTitleText":"队伍"}},{"path":"pages/chat/chat","style":{"navigationBarTitleText":"队伍聊天"}},{"path":"pages/my/my","style":{"navigationBarTitleText":"我的"}}],"tabBar":{"backgroundColor":"#fffdf7","borderStyle":"white","color":"#5d675f","list":[{"pagePath":"pages/island/island","text":"岛屿"},{"pagePath":"pages/my/my","text":"我的"}],"selectedColor":"#eb5d27"}}
+{
+  "globalStyle": {
+    "backgroundColor": "#f3f0e8",
+    "backgroundColorBottom": "#f3f0e8",
+    "backgroundColorTop": "#1b4d3e",
+    "navigationBarBackgroundColor": "#1b4d3e",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "三角洲组队岛"
+  },
+  "pages": [
+    {
+      "path": "pages/pilot/pilot",
+      "style": {
+        "navigationBarTitleText": "三角 · 找队友"
+      }
+    },
+    {
+      "path": "pages/island/island",
+      "style": {
+        "navigationBarTitleText": "组队岛"
+      }
+    },
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "我的档案"
+      }
+    },
+    {
+      "path": "pages/team/team",
+      "style": {
+        "navigationBarTitleText": "队伍"
+      }
+    },
+    {
+      "path": "pages/chat/chat",
+      "style": {
+        "navigationBarTitleText": "队伍聊天"
+      }
+    },
+    {
+      "path": "pages/my/my",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    }
+  ]
+}

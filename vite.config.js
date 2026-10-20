@@ -6,4 +6,5 @@ const uni = uniModule.default?.default ?? uniModule.default ?? uniModule
 
 export default defineConfig({
   plugins: [uni()],
+  server: { host: "127.0.0.1", port: 5188, strictPort: true, proxy: { "/api": process.env.PILOT_API_TARGET || "http://127.0.0.1:8011" } },
 })

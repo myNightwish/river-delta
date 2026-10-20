@@ -1,3 +1,10 @@
-// 后端地址：联调时改为实际地址；H5 dev 默认为本地
-export const API_BASE = 'http://127.0.0.1:8000/api'
-export const WS_BASE = 'ws://127.0.0.1:8000/api'
+// Public API endpoint. Render builds use HTTPS; local dev uses the Vite proxy.
+export const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? 'https://river-delta-api.onrender.com/api' : '/api')
+).replace(/\/+$/, '')
+export const WS_BASE = import.meta.env.VITE_WS_BASE_URL || (
+  API_BASE.startsWith('https://') ? API_BASE.replace('https://', 'wss://') :
+  API_BASE.startsWith('http://') ? API_BASE.replace('http://', 'ws://') :
+  'ws://127.0.0.1:8011/api'
+)
