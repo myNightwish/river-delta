@@ -39,7 +39,7 @@ function merge(items){
   const last=messages.value.at(-1)?.id;if(last!==oldLast)scrollTarget.value='chat-message-'+last
 }
 async function poll(){
-  if(pollBusy || disposed)return
+  if(pollBusy || disposed || (typeof document!=='undefined' && document.visibilityState==='hidden'))return
   pollBusy=true
   try{const last=messages.value.at(-1)?.id||0;const response=await api('/messages?after='+last);merge((await response.json()).items);connected.value=true}
   catch(e){connected.value=false;if(!disposed)error.value=e.message}
