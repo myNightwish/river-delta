@@ -14,42 +14,6 @@
         "navigationBarTitleText": "寻找在线合拍玩家",
         "navigationStyle": "custom"
       }
-    },
-    {
-      "path": "pages/island/island",
-      "style": {
-        "navigationBarTitleText": "组队岛"
-      }
-    },
-    {
-      "path": "pages/login/login",
-      "style": {
-        "navigationBarTitleText": "登录"
-      }
-    },
-    {
-      "path": "pages/profile/profile",
-      "style": {
-        "navigationBarTitleText": "我的档案"
-      }
-    },
-    {
-      "path": "pages/team/team",
-      "style": {
-        "navigationBarTitleText": "队伍"
-      }
-    },
-    {
-      "path": "pages/chat/chat",
-      "style": {
-        "navigationBarTitleText": "队伍聊天"
-      }
-    },
-    {
-      "path": "pages/my/my",
-      "style": {
-        "navigationBarTitleText": "我的"
-      }
     }
   ]
 }

@@ -2,6 +2,7 @@
   <view class="pilot">
     <view class="top"><view class="brand"><view class="brand-icon"><text></text><text></text></view><view><view class="brand-name">在线组队</view><view class="brand-caption">PLAYER MATCH</view></view></view><text class="badge"><text class="live-indicator">●</text> 烽火地带 · 两人组队</text></view>
     <view class="tabs"><button v-for="t in ['招募条件','招募大厅','我的组局']" :key="t" :class="{active:tab===t}" @click="switchTab(t)">{{t}}</button></view>
+    <growth-tools ref="growthRef" :ticket="state.ticket" :active-ticket="activeTicket" @matched="applySharedMatch" @edit="tab='招募条件'" @activity="applyActivity"/>
     <view v-if="error" class="error" role="alert">{{error}}</view><view v-if="state.notice && tab!=='招募大厅'" class="status-strip">{{state.notice.replace(/。$/,'')}}</view><view v-if="state.squad?.status==='proposed' && tab!=='我的组局'" class="status-strip pending">有待确认的队友，剩余 {{confirmRemaining}} 秒<button class="status-link" @click="switchTab('我的组局')">查看本局约定</button></view>
     <recruitment-wizard ref="wizardRef" v-if="tab==='招募条件'" :busy="busy" :active-ticket="activeTicket" :submit-error="error" :import-profile="testImport" @clear-error="error=''" @submit="join"/>
     <view v-if="tab==='招募大厅'">
@@ -27,12 +28,13 @@
       </view>
       <recent-squads :key="token" :token="token" :current-squad-id="state.squad?.id"/>
     </view>
-    <view class="footer">在线组队 · 烽火地带<testing-tools :get-draft="getTestDraft" @import="applyTestImport" @simulation-start="startSimulation" @hall="switchTab('招募大厅')"/></view>
+    <view class="footer">在线组队 · 烽火地带<button class="operations-entry" @click="growthRef?.openOperations()">运营管理</button><testing-tools :get-draft="getTestDraft" @import="applyTestImport" @simulation-start="startSimulation" @hall="switchTab('招募大厅')"/></view>
   </view>
 </template>
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { onShow, onHide, onUnload } from '@dcloudio/uni-app'
+import GrowthTools from '../../components/growth-tools.vue'
 import PilotCandidates from '../../components/pilot-candidates.vue'
 import PilotChat from '../../components/pilot-chat.vue'
 import RecentSquads from '../../components/recent-squads.vue'
@@ -42,7 +44,9 @@ import RecruitmentWizard from '../../components/recruitment-wizard.vue'
 import {loadPreferences} from '../../utils/pilot-preferences.js'
 import { profileSummary } from '../../utils/recruitment.js'
 import { sessionToken, setSessionToken, authRequest, ensureAnonymousSession } from '../../utils/pilot-session.js'
-const wizardRef=ref(null),testImport=ref(null)
+const growthRef=ref(null),wizardRef=ref(null),testImport=ref(null)
+function applySharedMatch(value){applyState(value);tab.value='我的组局'}
+function applyActivity(segment){testImport.value={...getTestDraft(),...segment,slot:'现在起一小时'};tab.value='招募条件'}
 function getTestDraft(){return wizardRef.value?.getDraft()||state.value.ticket?.profile||loadPreferences(uni).values}
 async function startSimulation(result){applyTestImport(result);applyState(result.state);tab.value='招募大厅';candidatePage.value=0;recommended.value=false;await loadCandidates()}
 function applyTestImport(result){if(result.token&&result.token!==token.value){state.value={};candidates.value={items:[],total:0,can_recommend:false};setSessionToken(result.token)}testImport.value={...result.profile};error.value='';tab.value='招募条件';refresh()}
@@ -100,4 +104,4 @@ onShow(()=>{pageVisible=true;if(typeof document!=='undefined')document.addEventL
 .queue-panel{padding:24px;text-align:center}.queue-status{display:flex;align-items:center;justify-content:center;gap:8px;color:#c7d5e5;font-size:13px;font-weight:600}.queue-live{width:6px;height:6px;border-radius:50%;background:#b9f477;box-shadow:0 0 9px #b9f47765;animation:queue-breathe 2s ease-in-out infinite}.queue-signal{position:relative;display:grid;place-items:center;width:88px;height:88px;margin:18px auto 12px}.signal-ring{position:absolute;inset:12px;border:1px solid #b9f47775;border-radius:50%;animation:queue-ripple 3s ease-out infinite}.signal-ring-late{animation-delay:-1.5s}.signal-core{position:relative;display:flex;align-items:center;justify-content:center;gap:5px;width:42px;height:42px;border-radius:50%;background:#182723;border:1px solid #b9f47740;box-shadow:0 0 24px #b9f4770c}.signal-core text{width:4px;height:4px;border-radius:50%;background:#b9f477;animation:queue-dot 1.4s ease-in-out infinite}.signal-core text:nth-child(2){animation-delay:.18s}.signal-core text:nth-child(3){animation-delay:.36s}.queue-panel .aside-title{font-size:20px;margin:10px 0}.queue-hint{font-size:12px;line-height:1.8;color:#93a4b9}.queue-panel .small{max-width:580px;margin:8px auto 0}.queue-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:22px}.queue-actions .submit{width:auto;max-width:none;margin:0;padding:10px 20px;font-size:12px}.queue-actions .btn-secondary{background:#111a25;border:1px solid #3c4b60}
 @keyframes queue-ripple{0%{transform:scale(.7);opacity:0}15%{opacity:.7}100%{transform:scale(1.4);opacity:0}}@keyframes queue-dot{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}@keyframes queue-breathe{50%{opacity:.45}}
 @media(prefers-reduced-motion:reduce){.queue-live,.signal-ring,.signal-core text{animation:none}.signal-ring-late{display:none}.signal-ring{opacity:.45}}
-</style>
+.operations-entry{display:inline;padding:0;margin-left:10px;border:0;background:none;color:#63758c;font-size:10px;line-height:1.8;width:auto}.operations-entry:focus-visible{outline:1px solid #b9f477;outline-offset:3px}</style>

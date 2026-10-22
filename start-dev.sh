@@ -1,40 +1,34 @@
 #!/bin/bash
-# 联调一键启动：后端 FastAPI + 前端 uni-app H5
-set -e
+# Run from the canonical sibling Git repositories; keep both processes attached.
+set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND="$APP_DIR/../delta-force-match-server"
-
-# 选 Python：优先 3.12/3.11（依赖兼容性最稳），都没有才用 python3
-pick_python() {
-  for p in python3.12 python3.11 python3; do
-    if command -v "$p" >/dev/null 2>&1; then echo "$p"; return; fi
-  done
-  echo "python3"
-}
-PY=$(pick_python)
-echo "使用 Python: $("$PY" --version 2>&1)"
-
-if [ ! -d "$BACKEND/.venv" ]; then
-  echo "创建后端虚拟环境…"
-  "$PY" -m venv "$BACKEND/.venv"
-fi
-echo "安装后端依赖…"
-if ! "$BACKEND/.venv/bin/pip" install -r "$BACKEND/requirements.txt"; then
-  echo ""
-  echo "依赖安装失败：请把上面以 ERROR 开头的几行发给我，我来修。"
+if lsof -iTCP:8011 -sTCP:LISTEN >/dev/null 2>&1 || lsof -iTCP:5188 -sTCP:LISTEN >/dev/null 2>&1; then
+  echo '8011 或 5188 已有服务运行，请检查并复用'
   exit 1
 fi
-
-echo "启动后端 :8000 …"
-(cd "$BACKEND" && PYTHONPATH="$BACKEND" nohup "$BACKEND/.venv/bin/uvicorn" app.main:app --host 0.0.0.0 --port 8000 --reload > /tmp/delta-api.log 2>&1 &)
-sleep 3
-curl -s http://127.0.0.1:8000/health && echo "  <- 后端 OK"
-
-echo "启动前端 H5 …"
-if [ ! -d "$APP_DIR/node_modules" ]; then
-  echo "安装前端依赖（第一次较慢）…"
-  (cd "$APP_DIR" && npm install --no-audit --no-fund)
+if [ ! -x "$BACKEND/.venv/bin/python" ]; then
+  PILOT_PYTHON=""
+  for candidate in python3.12 python3.11 python3.13 python3.14 python3; do
+    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)'; then
+      PILOT_PYTHON="$candidate"
+      break
+    fi
+  done
+  if [ -z "$PILOT_PYTHON" ]; then
+    echo '请安装 Python 3.10 或更新版本，建议使用 3.12'
+    exit 1
+  fi
+  "$PILOT_PYTHON" -m venv "$BACKEND/.venv"
+  "$BACKEND/.venv/bin/python" -m pip install -r "$BACKEND/requirements.txt"
 fi
-(cd "$APP_DIR" && nohup ./node_modules/.bin/uni -p h5 > /tmp/delta-h5.log 2>&1 &)
-echo "等 20 秒后打开 http://localhost:5173 开始联调"
-echo "日志：/tmp/delta-api.log /tmp/delta-h5.log"
+if [ ! -d "$APP_DIR/node_modules" ]; then
+  (cd "$APP_DIR" && npm ci --no-audit --no-fund)
+fi
+(cd "$BACKEND" && exec .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8011) &
+API_PID=$!
+(cd "$APP_DIR" && exec npm run dev:h5) &
+WEB_PID=$!
+trap 'kill "$API_PID" "$WEB_PID" 2>/dev/null || true' EXIT INT TERM
+printf '页面：http://127.0.0.1:5188/\n后端：http://127.0.0.1:8011/health\n'
+wait
