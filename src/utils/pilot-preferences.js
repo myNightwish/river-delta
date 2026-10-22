@@ -41,4 +41,10 @@ export function pickPreferences(value){
  return result
 }
 export function loadPreferences(storage){try{const raw=storage.getStorageSync(PREFERENCES_KEY)||storage.getStorageSync('pilot-preferences-v1');const value=typeof raw==='string'&&raw?JSON.parse(raw):raw;const found=!!value&&typeof value==='object'&&!Array.isArray(value);return {values:pickPreferences(value),found}}catch{return {values:fresh(),found:false}}}
-export function savePreferences(storage,value){try{storage.setStorageSync(PREFERENCES_KEY,pickPreferences(value));return true}catch{return false}}
+export function savePreferencesDetailed(storage,value){
+ let normalized
+ try{normalized=pickPreferences(value)}catch(e){return {ok:false,stage:'data',errorName:e?.name||'Error',reason:e?.message||'数据处理失败',message:'草稿暂未保存，仍可继续填写'}}
+ try{storage.setStorageSync(PREFERENCES_KEY,normalized);return {ok:true}}
+ catch(e){const name=e?.name||'Error';return {ok:false,stage:'storage',errorName:name,reason:e?.errMsg||e?.message||'本地写入失败',message:name==='QuotaExceededError'?'浏览器存储空间不足，草稿暂未保存':name==='SecurityError'?'浏览器限制了本地存储，草稿暂未保存':'草稿暂未保存，刷新后可能需要重新填写'}}
+}
+export function savePreferences(storage,value){return savePreferencesDetailed(storage,value).ok}

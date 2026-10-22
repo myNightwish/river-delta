@@ -3,7 +3,7 @@
     <view class="top"><view class="brand"><view class="brand-icon"><text></text><text></text></view><view><view class="brand-name">在线组队</view><view class="brand-caption">PLAYER MATCH</view></view></view><text class="badge"><text class="live-indicator">●</text> 烽火地带 · 两人组队</text></view>
     <view class="tabs"><button v-for="t in ['招募条件','招募大厅','我的组局']" :key="t" :class="{active:tab===t}" @click="switchTab(t)">{{t}}</button></view>
     <view v-if="error" class="error" role="alert">{{error}}</view><view v-if="state.notice && tab!=='招募大厅'" class="status-strip">{{state.notice.replace(/。$/,'')}}</view><view v-if="state.squad?.status==='proposed' && tab!=='我的组局'" class="status-strip pending">有待确认的队友，剩余 {{confirmRemaining}} 秒<button class="status-link" @click="switchTab('我的组局')">查看本局约定</button></view>
-    <recruitment-wizard v-if="tab==='招募条件'" :busy="busy" :active-ticket="activeTicket" :submit-error="error" :import-profile="testImport" @clear-error="error=''" @submit="join"/>
+    <recruitment-wizard ref="wizardRef" v-if="tab==='招募条件'" :busy="busy" :active-ticket="activeTicket" :submit-error="error" :import-profile="testImport" @clear-error="error=''" @submit="join"/>
     <view v-if="tab==='招募大厅'">
       <view v-if="state.ticket" class="status-strip"><text class="status-dot" :class="{online:activeTicket}"/><text>{{!activeTicket?(state.ticket.status==='expired'?'招募已过期，重新发布后可申请组队':'发布招募条件后可申请组队'):state.ticket.status==='matched'?'已有待确认队友':'招募中，可主动选择队友'}}</text><button v-if="!activeTicket" class="status-link" @click="tab='招募条件'">重新发布 →</button><button v-else-if="state.ticket.status==='matched'" class="status-link" @click="switchTab('我的组局')">查看队友 →</button></view>
       <pilot-candidates :items="candidates.items" :total="candidates.total" :page="candidatePage" :recommended="recommended" :can-recommend="candidates.can_recommend" :busy="busy" :waiting="state.ticket?.status==='waiting'" :my-status="candidates.my_status" @refresh="loadCandidates" @mode="setCandidateMode" @edit="tab='招募条件'" @invite="invite" @page="changePage" @skip="skipBatch"/>
@@ -20,7 +20,7 @@
       </view>
       <recent-squads :key="token" :token="token" :current-squad-id="state.squad?.id"/>
     </view>
-    <view class="footer">在线组队 · 烽火地带<testing-tools @import="applyTestImport"/></view>
+    <view class="footer">在线组队 · 烽火地带<testing-tools :get-draft="getTestDraft" @import="applyTestImport" @simulation-start="startSimulation" @hall="switchTab('招募大厅')"/></view>
   </view>
 </template>
 <script setup>
@@ -32,9 +32,12 @@ import RecentSquads from '../../components/recent-squads.vue'
 import TestingTools from '../../components/testing-tools.vue'
 import DarkSelect from '../../components/dark-select.vue'
 import RecruitmentWizard from '../../components/recruitment-wizard.vue'
+import {loadPreferences} from '../../utils/pilot-preferences.js'
 import { profileSummary } from '../../utils/recruitment.js'
 import { sessionToken, setSessionToken, authRequest, ensureAnonymousSession } from '../../utils/pilot-session.js'
-const testImport=ref(null)
+const wizardRef=ref(null),testImport=ref(null)
+function getTestDraft(){return wizardRef.value?.getDraft()||state.value.ticket?.profile||loadPreferences(uni).values}
+async function startSimulation(result){applyTestImport(result);applyState(result.state);tab.value='招募大厅';candidatePage.value=0;recommended.value=false;await loadCandidates()}
 function applyTestImport(result){if(result.token&&result.token!==token.value){state.value={};candidates.value={items:[],total:0,can_recommend:false};setSessionToken(result.token)}testImport.value={...result.profile};error.value='';tab.value='招募条件';refresh()}
 const tab=ref('招募条件'), busy=ref(false), error=ref(''), state=ref({}), config=ref({})
 const candidates=ref({items:[],total:0,can_recommend:false}), recommended=ref(false), candidatePage=ref(0), rejectIndex=ref(0), clock=ref(Date.now())
