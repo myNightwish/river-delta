@@ -23,8 +23,8 @@ test('catalog keys are stable semantic IDs and both languages have the same key 
  assert.equal(translate('action.confirm','en'),'Confirm');assert.equal(translate('action.confirm','zh-CN'),'确认')
  assert.equal(translate('确认','en'),'[missing translation]')
 })
-test('manual language preference wins over browser language',()=>{
- assert.equal(chooseLocale('zh-CN',['en-US']),'zh-CN');assert.equal(chooseLocale('en',['zh-CN']),'en');assert.equal(chooseLocale('', ['en-GB']),'en');assert.equal(chooseLocale('bad',['ja-JP']),'zh-CN')
+test('first visit defaults to Chinese regardless of browser language; explicit preference persists',()=>{
+ assert.equal(chooseLocale('zh-CN',['en-US']),'zh-CN');assert.equal(chooseLocale('en',['zh-CN']),'en');assert.equal(chooseLocale('', ['en-GB']),'zh-CN');assert.equal(chooseLocale('bad',['ja-JP']),'zh-CN');assert.equal(chooseLocale(undefined,['en-US']),'zh-CN');assert.equal(chooseLocale(null),'zh-CN')
 })
 test('every matching enum is an ID with labels in both catalogs',()=>{
  for(const key of [...GOALS,...SLOT_OPTIONS,...TASKS,...STYLE_LABELS,...Object.keys(MAP_MODES),...Object.values(MAP_MODES).flat(),'language.zh','language.en','voice.mic']){

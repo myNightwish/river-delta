@@ -3,7 +3,7 @@ import chinese from './zh.js'
 export const LOCALE_KEY='ui-locale-v1'
 export const SUPPORTED_LOCALES=Object.freeze(['zh-CN','en'])
 export function normalizeLocale(value){return typeof value==='string'&&/^en(?:-|$)/i.test(value)?'en':'zh-CN'}
-export function chooseLocale(saved,languages=[]){return SUPPORTED_LOCALES.includes(saved)?saved:normalizeLocale(languages[0])}
+export function chooseLocale(saved){return SUPPORTED_LOCALES.includes(saved)?saved:'zh-CN'}
 export function hasMessage(key){return typeof key==='string'&&Object.hasOwn(chinese,key)}
 export function translate(key,language='zh-CN',params={}){
  if(key==null)return ''

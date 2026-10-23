@@ -2,7 +2,7 @@
 
 ## Interface, listing and communication language are separate
 
-- Interface locale: `zh-CN` / `en`, stored only as `ui-locale-v1`.
+- Interface locale: `zh-CN` / `en`, stored only as `ui-locale-v1`. First visits default to Simplified Chinese regardless of browser language; an explicit saved language choice takes precedence.
 - Listing language: required `listing_language: zh | en` on every V4 recruitment. A new submission derives this field from the interface language at submission time. There is no independent language selector. Switching the interface before publishing changes the upcoming submission language; switching after publishing never changes the existing listing.
 - Communication language: `language.zh | language.en`, a response field derived by the server from the listing language; it is not independently selected or accepted as a V4 input field.
 
