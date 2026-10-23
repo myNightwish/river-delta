@@ -566,4 +566,7 @@ button::after {
 }
 
 page {color-scheme:dark}button{border-radius:10px;color:var(--ink)}button::after{border-radius:10px}.btn-primary{background:var(--orange);color:#12200d;border-radius:10px;box-shadow:none}.btn-primary::after{display:none}.btn-secondary{border-radius:10px}.muted{color:var(--muted)}input,textarea{color:var(--ink)}input::placeholder,textarea::placeholder{color:#7c8ca1}picker .uni-picker-container{color:#e9eef5}picker .uni-picker-action, picker .uni-picker-content{background:#17202c;color:#e9eef5}
+
+/* Keep native H5 toast notifications aligned with the app toast position. */
+uni-toast .uni-toast,uni-toast .uni-sample-toast{top:20%!important;transform:translateX(-50%)!important}
 </style>

@@ -7,7 +7,7 @@ export const DEFAULT_PREFERENCES=Object.freeze({
  score_mode:'auto',manual_score:'',confidential_kd:'',top_secret_kd:'',combat_score:'',
  strength_range_mode:'auto',strength_min:'',strength_max:'',discovery:'browse',public:true,wizard_step:1,
 })
-const choices={region:['NA','EU','SEA','OCE','ME'],platform:['PC','Console','Mobile'],language:['中文','English','日本語'],voice:['开麦','听指挥与标记'],slot:['现在起一小时','今天晚间'],goal:GOALS,score_mode:['auto','manual'],strength_range_mode:['auto','custom'],discovery:['browse','auto']}
+const choices={region:['NA','EU','SEA','OCE','ME'],platform:['PC','Console','Mobile'],language:['中文','English','日本語'],voice:['开麦','听指挥与标记'],slot:['现在起一小时','今天晚间'],goal:GOALS,score_mode:['auto'],strength_range_mode:['auto','custom'],discovery:['browse','auto']}
 const bounds={helmet:[1,6],armor:[1,6],ammo:[1,6],style:[1,5],partner_style_min:[1,5],partner_style_max:[1,5],partner_helmet_min:[1,6],partner_armor_min:[1,6],partner_ammo_min:[1,6],confidential_kd:[0,1000],top_secret_kd:[0,1000],combat_score:[0,1000000],manual_score:[0,1e9],strength_min:[0,1e9],strength_max:[0,1.3e9],wizard_step:[1,4]}
 const integers=new Set(['helmet','armor','ammo','style','partner_style_min','partner_style_max','partner_helmet_min','partner_armor_min','partner_ammo_min','wizard_step'])
 function fresh(){return {...DEFAULT_PREFERENCES,tasks:[],maps:[]}}

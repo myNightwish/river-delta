@@ -1,4 +1,3 @@
-export {scoreOf} from './recruitment-options.js'
 export function strengthBand(n) { return n<60?'60 以下':n<100?'60–100':n<150?'100–150':n<200?'150–200':'200 及以上' }
 export function profileSummary(p) {
   if(p.schema_version===4)return [p.goal,p.maps.map(m=>m.map+' · '+m.difficulty).join(' / '),p.goal==='卡战备跑刀'?'':`头${p.helmet} 甲${p.armor} 弹${p.ammo}`,`打法 ${p.style}`].filter(Boolean).join(' · ')
