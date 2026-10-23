@@ -1,15 +1,15 @@
-import {MAP_MODES,GOALS,TASKS} from './recruitment-options.js'
+import {MAP_MODES,GOALS,TASKS,SLOT_OPTIONS} from './recruitment-options.js'
 export const PREFERENCES_KEY='pilot-preferences-v2'
 export const DEFAULT_PREFERENCES=Object.freeze({
- schema_version:4,nickname:'',region:'NA',platform:'PC',language:'中文',voice:'开麦',slot:'现在起一小时',
+ schema_version:4,nickname:'',region:'NA',platform:'PC',language:'中文',voice:'开麦',slot:'',slot_explicit:false,
  goal:'',tasks:[],maps:[],helmet:null,armor:null,ammo:null,style:3,
  partner_style_min:1,partner_style_max:5,partner_helmet_min:null,partner_armor_min:null,partner_ammo_min:null,
  score_mode:'auto',manual_score:'',confidential_kd:'',top_secret_kd:'',combat_score:'',
- strength_range_mode:'auto',strength_min:'',strength_max:'',discovery:'browse',public:true,wizard_step:1,
+ strength_range_mode:'auto',strength_tolerance_percent:30,strength_min:'',strength_max:'',discovery:'browse',public:true,wizard_step:1,
 })
-const choices={region:['NA','EU','SEA','OCE','ME'],platform:['PC','Console','Mobile'],language:['中文','English','日本語'],voice:['开麦','听指挥与标记'],slot:['现在起一小时','今天晚间'],goal:GOALS,score_mode:['auto'],strength_range_mode:['auto','custom'],discovery:['browse','auto']}
-const bounds={helmet:[1,6],armor:[1,6],ammo:[1,6],style:[1,5],partner_style_min:[1,5],partner_style_max:[1,5],partner_helmet_min:[1,6],partner_armor_min:[1,6],partner_ammo_min:[1,6],confidential_kd:[0,1000],top_secret_kd:[0,1000],combat_score:[0,1000000],manual_score:[0,1e9],strength_min:[0,1e9],strength_max:[0,1.3e9],wizard_step:[1,4]}
-const integers=new Set(['helmet','armor','ammo','style','partner_style_min','partner_style_max','partner_helmet_min','partner_armor_min','partner_ammo_min','wizard_step'])
+const choices={region:['NA','EU','SEA','OCE','ME'],platform:['PC','Console','Mobile'],language:['中文','English','日本語'],voice:['开麦','听指挥与标记'],slot:SLOT_OPTIONS,goal:GOALS,score_mode:['auto'],strength_range_mode:['auto','custom','percent'],discovery:['browse','auto']}
+const bounds={helmet:[1,6],armor:[1,6],ammo:[1,6],style:[1,5],partner_style_min:[1,5],partner_style_max:[1,5],partner_helmet_min:[1,6],partner_armor_min:[1,6],partner_ammo_min:[1,6],confidential_kd:[0,1000],top_secret_kd:[0,1000],combat_score:[0,1000000],manual_score:[0,1e9],strength_min:[0,1e9],strength_max:[0,2e9],strength_tolerance_percent:[0,100],wizard_step:[1,4]}
+const integers=new Set(['strength_tolerance_percent','helmet','armor','ammo','style','partner_style_min','partner_style_max','partner_helmet_min','partner_armor_min','partner_ammo_min','wizard_step'])
 function fresh(){return {...DEFAULT_PREFERENCES,tasks:[],maps:[]}}
 export function pickPreferences(value){
  const result=fresh()
@@ -27,15 +27,16 @@ export function pickPreferences(value){
  for(const key of Object.keys(result)){
   const n=v[key]
   if(choices[key]){if(choices[key].includes(n))result[key]=n}
-  else if(bounds[key]){const [lo,hi]=bounds[key];if(Number.isFinite(n)&&n>=lo&&n<=hi&&(!integers.has(key)||Number.isInteger(n)))result[key]=n;else if(n===''||n===null)result[key]=n}
+  else if(bounds[key]){const [lo,hi]=bounds[key];if(Number.isFinite(n)&&n>=lo&&n<=hi&&(!integers.has(key)||Number.isInteger(n)))result[key]=n;else if((n===''||n===null)&&key!=='strength_tolerance_percent')result[key]=n}
   else if(key==='nickname'&&typeof n==='string')result[key]=n.slice(0,24)
-  else if(key==='public'&&typeof n==='boolean')result[key]=n
+  else if((key==='public'||key==='slot_explicit')&&typeof n==='boolean')result[key]=n
  }
  if(Array.isArray(v.tasks))result.tasks=[...new Set(v.tasks.filter(t=>TASKS.includes(t)))].slice(0,8)
  if(Array.isArray(v.maps)){
   const seen=new Set()
   result.maps=v.maps.filter(m=>m&&MAP_MODES[m.map]&&!seen.has(m.map)&&seen.add(m.map)).slice(0,6).map(m=>({map:m.map,difficulty:MAP_MODES[m.map].includes(m.difficulty)?m.difficulty:''}))
  }
+ if(!result.slot_explicit)result.slot=''
  result.schema_version=4
  result.wizard_step=Number.isInteger(result.wizard_step)?result.wizard_step:1
  return result

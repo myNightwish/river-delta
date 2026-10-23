@@ -4,7 +4,7 @@
     <view class="tabs"><button v-for="item in PILOT_TABS" :key="item.id" :class="{active:tab===item.id}" :aria-pressed="tab===item.id" @click="switchTab(item.id)"><text>{{item.label}}</text><text v-if="item.id===PILOT_TAB.HALL && state.ticket?.status==='waiting'" class="recruiting-badge" role="status">招募中</text></button></view>
     <growth-tools ref="growthRef" :ticket="state.ticket" :active-ticket="activeTicket" :activities-visible="tab===PILOT_TAB.ACTIVITIES" @matched="applySharedMatch" @edit="tab=PILOT_TAB.CONDITIONS" @activity="applyActivity"/>
     <view v-if="error" class="error" role="alert">{{error}}</view><view v-if="state.notice && tab!==PILOT_TAB.HALL && tab!==PILOT_TAB.ACTIVITIES" class="status-strip">{{state.notice.replace(/。$/,'')}}</view><view v-if="state.squad?.status==='proposed' && tab!==PILOT_TAB.MY_RECRUITMENT && tab!==PILOT_TAB.ACTIVITIES" class="status-strip pending">有待确认的队友，剩余 {{confirmRemaining}} 秒<button class="status-link" @click="switchTab(PILOT_TAB.MY_RECRUITMENT)">查看本局约定</button></view>
-    <recruitment-wizard ref="wizardRef" v-if="tab===PILOT_TAB.CONDITIONS" :busy="busy" :active-ticket="activeTicket" :submit-error="error" :import-profile="testImport" @clear-error="error=''" @submit="join"/>
+    <recruitment-wizard ref="wizardRef" v-if="tab===PILOT_TAB.CONDITIONS" :busy="busy" :active-ticket="activeTicket" :existing-ticket="state.ticket" :squad-status="state.squad?.status" :resume-draft="wizardDraft" :submit-error="error" :import-profile="testImport" @clear-error="error=''" @view-active="switchTab(PILOT_TAB.MY_RECRUITMENT)" @draft-change="wizardDraft=$event" @replace="replaceRecruitment" @submit="join"/>
     <view v-if="tab===PILOT_TAB.HALL">
       <view v-if="state.ticket && !['waiting','expired'].includes(state.ticket.status)" class="status-strip"><text class="status-dot" :class="{online:activeTicket}"/><text>{{!activeTicket?(state.ticket.status==='expired'?'招募已过期，重新发布后可申请组队':'发布招募条件后可申请组队'):'已有待确认队友'}}</text><button v-if="!activeTicket" class="status-link" @click="tab=PILOT_TAB.CONDITIONS">重新发布 →</button><button v-else-if="state.ticket.status==='matched'" class="status-link" @click="switchTab(PILOT_TAB.MY_RECRUITMENT)">查看队友 →</button></view>
       <pilot-candidates :items="candidates.items" :total="candidates.total" :page="candidatePage" :recommended="recommended" :can-recommend="candidates.can_recommend" :busy="busy" :waiting="state.ticket?.status==='waiting'" :my-status="candidates.my_status" @refresh="loadCandidates" @mode="setCandidateMode" @edit="tab=PILOT_TAB.CONDITIONS" @invite="invite" @page="changePage" @skip="skipBatch">
@@ -12,6 +12,7 @@
       </pilot-candidates>
     </view>
     <view v-if="tab===PILOT_TAB.MY_RECRUITMENT">
+      <view v-if="state.ticket && state.squad" class="published-details-entry"><button class="btn-secondary" @click="detailsOpen=true">查看组队详情</button></view>
       <view v-if="!state.ticket" class="panel-pilot empty"><view class="aside-title">还没有本局计划</view><view class="muted">先告诉队友，你这次想怎么玩</view><button class="btn-primary submit" @click="tab=PILOT_TAB.CONDITIONS">填写招募条件</button></view>
       <view v-else-if="!state.squad" class="panel-pilot empty queue-panel">
         <view class="queue-status"><text v-if="state.ticket.status==='waiting'" class="queue-live"/>{{state.ticket.status==='waiting'?'正在寻找队友':'本次排队已结束'}}</view>
@@ -19,7 +20,7 @@
         <view class="aside-title">{{state.ticket.status==='waiting'?'等待合拍玩家':'准备好，再出发'}}</view>
         <view class="queue-hint">{{state.ticket.status==='waiting'?'也可以到大厅主动找队友，招募有效期为 20 分钟':'招募已结束，可以调整条件后重新发布'}}</view>
         <view class="small">{{state.ticket.profile.region}} · {{profileSummary(state.ticket.profile)}}</view>
-        <view class="queue-actions"><button v-if="state.ticket.status==='waiting'" class="btn-primary submit" @click="switchTab(PILOT_TAB.HALL)">查看推荐队友</button><button v-if="state.ticket.status==='waiting' && state.ticket.profile.public && !state.ticket.profile.is_demo" class="btn-primary submit share-recruitment" :disabled="busy" @click="growthRef?.makeShare()">分享招募</button><button v-if="activeTicket" class="btn-secondary submit" :disabled="busy" @click="act('cancel')">取消本次排队</button><button v-else class="btn-primary submit" @click="tab=PILOT_TAB.CONDITIONS">重新填写</button></view>
+        <view class="queue-actions"><button class="btn-secondary submit" @click="detailsOpen=true">查看组队详情</button><button v-if="state.ticket.status==='waiting'" class="btn-primary submit" @click="switchTab(PILOT_TAB.HALL)">查看推荐队友</button><button v-if="state.ticket.status==='waiting' && state.ticket.profile.public && !state.ticket.profile.is_demo" class="btn-primary submit share-recruitment" :disabled="busy" @click="growthRef?.makeShare()">分享组队</button><button v-if="activeTicket" class="btn-secondary submit" :disabled="busy" @click="act('cancel')">取消本次排队</button><button v-else class="btn-primary submit" @click="tab=PILOT_TAB.CONDITIONS">重新填写</button></view>
       </view>
       <view v-else class="layout"><view><pilot-chat v-if="['ready','done'].includes(state.squad.status)" :key="state.squad.id" :squad-id="state.squad.id" :token="token"/><view class="panel-pilot"><view class="section-num">{{statusLabel}}</view><view class="aside-title">{{state.squad.status==='proposed'?'先确认约定，再进游戏':'队伍已就绪，聊聊再出发'}}</view><view v-if="state.squad.status==='proposed'" class="warning">剩余 {{confirmRemaining}} 秒，请双方确认。超时释放名额，保留排队进度</view><view class="members"><view v-for="m in state.squad.members" :key="m.id" class="member"><view class="avatar-pilot">{{m.profile.nickname.slice(0,1)}}</view><b>{{m.profile.nickname}}{{m.is_me?'（我）':''}}</b><view class="muted">{{m.profile.strength_score!==undefined?'实力分 '+m.profile.strength_score:ranks[m.profile.rank-1]}}</view><view class="small">{{profileSummary(m.profile)}}<br/>{{m.profile.voice}}</view><view class="status-text">{{m.confirmed?'✓ 已确认':'等待确认'}}</view><view v-if="['ready','done'].includes(state.squad.status) && m.profile.game_id">游戏 ID：{{m.profile.game_id}}</view></view></view>
 
@@ -30,6 +31,7 @@
       </view>
       <recent-squads :key="token" :token="token" :current-squad-id="state.squad?.id"/>
     </view>
+    <published-recruitment v-if="detailsOpen && state.ticket" :ticket="state.ticket" @close="detailsOpen=false"/>
     <view class="footer">在线组队 · 烽火地带<button class="operations-entry" @click="growthRef?.openOperations()">运营管理</button><testing-tools :get-draft="getTestDraft" @import="applyTestImport" @simulation-start="startSimulation" @hall="switchTab(PILOT_TAB.HALL)"/></view>
   </view>
 </template>
@@ -43,11 +45,12 @@ import PilotChat from '../../components/pilot-chat.vue'
 import RecentSquads from '../../components/recent-squads.vue'
 import TestingTools from '../../components/testing-tools.vue'
 import DarkSelect from '../../components/dark-select.vue'
+import PublishedRecruitment from '../../components/published-recruitment.vue'
 import RecruitmentWizard from '../../components/recruitment-wizard.vue'
 import {loadPreferences} from '../../utils/pilot-preferences.js'
 import { profileSummary } from '../../utils/recruitment.js'
 import { sessionToken, setSessionToken, authRequest, ensureAnonymousSession } from '../../utils/pilot-session.js'
-const growthRef=ref(null),wizardRef=ref(null),testImport=ref(null)
+const growthRef=ref(null),wizardRef=ref(null),testImport=ref(null),wizardDraft=ref(null),detailsOpen=ref(false)
 function applySharedMatch(value){applyState(value);tab.value=PILOT_TAB.MY_RECRUITMENT}
 function applyActivity(segment){testImport.value={...getTestDraft(),...segment,slot:'现在起一小时'};tab.value=PILOT_TAB.CONDITIONS}
 function getTestDraft(){return wizardRef.value?.getDraft()||state.value.ticket?.profile||loadPreferences(uni).values}
@@ -77,12 +80,18 @@ async function invite(id){busy.value=true;error.value='';try{applyState(await re
 async function skipBatch(){busy.value=true;error.value='';try{await request('skip',{candidate_ids:candidates.value.items.map(c=>c.id)});candidatePage.value=0;await loadCandidates()}catch(e){error.value=e.message}finally{busy.value=false}}
 async function switchTab(t){if(!PILOT_TABS.some(item=>item.id===t))return;tab.value=t;await refresh();if(t===PILOT_TAB.HALL)await loadCandidates()}
 async function join(payload){busy.value=true;error.value='';try{applyState(await request('join',payload));Object.assign(review,{played:true,again:'',goal_met:false,budget_met:false,skill_met:false,reason:''});tab.value=state.value.squad?PILOT_TAB.MY_RECRUITMENT:payload.discovery==='browse'?PILOT_TAB.HALL:PILOT_TAB.MY_RECRUITMENT;if(tab.value===PILOT_TAB.HALL)await loadCandidates()}catch(e){error.value=e.message;uni.pageScrollTo({scrollTop:0,duration:200})}finally{busy.value=false}}
+async function replaceRecruitment(payload){
+ if(busy.value)return;const identity=token.value;busy.value=true;error.value=''
+ try{const value=await request('replace',payload);if(identity!==token.value)return;applyState(value);Object.assign(review,{played:true,again:'',goal_met:false,budget_met:false,skill_met:false,reason:''});tab.value=PILOT_TAB.MY_RECRUITMENT}
+ catch(e){if(identity===token.value){await refresh();if(identity===token.value)error.value=e.message}}
+ finally{if(identity===token.value)busy.value=false}
+}
 async function act(action,data={}){busy.value=true;error.value='';try{applyState(await request(action,{...data,squad_id:state.value.squad?.id}));if(action==='reject'){tab.value=PILOT_TAB.HALL;candidatePage.value=0;await loadCandidates()}}catch(e){error.value=e.message}finally{busy.value=false}}
 function rejectProposal(){act('reject',{reason:rejectReason.value})}
 function cancelSquad(){uni.showModal({title:'取消本次组局？',content:'你将退出本局，对方可以继续寻找队友',success:r=>{if(r.confirm)act('cancel')}})}
 async function init(){try{await ensureAnonymousSession();await refresh();}catch(e){error.value=e.message}clearInterval(timer);timer=setInterval(async()=>{if(!pageVisible||!browserVisible())return;clock.value=Date.now();if(!busy.value&&++tick%4===0){await refresh();if(tab.value===PILOT_TAB.HALL)await loadCandidates()}},1000)}
 
-watch(token,async()=>{await refresh();if(tab.value===PILOT_TAB.HALL)await loadCandidates()})
+watch(token,async()=>{wizardDraft.value=null;detailsOpen.value=false;await refresh();if(tab.value===PILOT_TAB.HALL)await loadCandidates()})
 onShow(()=>{pageVisible=true;if(typeof document!=='undefined')document.addEventListener('visibilitychange',onVisibilityChange);init()});onHide(()=>{pageVisible=false;clearInterval(timer)});onUnload(()=>{pageVisible=false;clearInterval(timer);if(typeof document!=='undefined')document.removeEventListener('visibilitychange',onVisibilityChange)})
 </script>
 <style scoped>
@@ -109,4 +118,5 @@ onShow(()=>{pageVisible=true;if(typeof document!=='undefined')document.addEventL
 .operations-entry{display:inline;padding:0;margin-left:10px;border:0;background:none;color:#63758c;font-size:10px;line-height:1.8;width:auto}.operations-entry:focus-visible{outline:1px solid #b9f477;outline-offset:3px}
 .tabs button{position:relative;overflow:visible}.recruiting-badge{position:absolute;right:1px;top:-9px;padding:2px 5px;border:2px solid #0e141d;border-radius:6px;background:#b9f477;color:#14200c;font-size:8px;font-weight:700;line-height:1.35;white-space:nowrap;pointer-events:none}.share-recruitment{background:#b9f477;color:#15200e;border:1px solid #b9f477;font-weight:750;box-shadow:0 3px 14px #b9f47712}@media(max-width:400px){.recruiting-badge{right:-1px;font-size:7px;padding:2px 4px}}
 .hall-expired{display:flex;align-items:center;gap:8px;flex:0 1 380px;min-width:0;color:#b8c79f;font-size:11px;line-height:1.7}.expired-ticker{overflow:hidden;min-width:0;flex:1;mask-image:linear-gradient(to right,transparent,#000 8px,#000 calc(100% - 8px),transparent)}.expired-track{display:flex;width:max-content;animation:expired-drift 90s linear infinite;will-change:transform}.expired-track>text{display:block;white-space:nowrap;flex-shrink:0;padding-right:36px}.hall-expired .expired-republish{flex-shrink:0;display:inline-flex;width:auto;min-height:0;margin:0;padding:0;border:0;background:transparent;color:#c0e99e;font-size:11px;line-height:1.7;white-space:nowrap}.expired-ticker:hover .expired-track,.expired-ticker:focus .expired-track{animation-play-state:paused}.expired-republish:focus-visible,.expired-ticker:focus-visible{outline:1px solid #b9f477;outline-offset:3px}@keyframes expired-drift{from{transform:translateX(-50%)}to{transform:translateX(0)}}@media(prefers-reduced-motion:reduce){.expired-track{animation:none;transform:none}}@media(max-width:550px){.hall-expired,.hall-expired .expired-republish{font-size:10px}.hall-expired{gap:5px}}
+.published-details-entry{display:flex;justify-content:flex-end;margin-bottom:12px}.published-details-entry button{margin:0;padding:7px 12px;font-size:12px;line-height:1.5;border-radius:7px}
 </style>

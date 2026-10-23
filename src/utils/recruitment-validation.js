@@ -22,7 +22,8 @@ export function stepErrors(p,step){
  if(step===4){
   if(!Number.isInteger(p.partner_style_min)||!Number.isInteger(p.partner_style_max)||!valid(p.partner_style_min,1,5)||!valid(p.partner_style_max,1,5)||p.partner_style_min>p.partner_style_max)errors.partner_style='打法范围下限不能高于上限'
   if(p.goal!=='卡战备跑刀')for(const k of ['helmet','armor','ammo']){const key='partner_'+k+'_min';if(!Number.isInteger(p[key])||!valid(p[key],1,6)||empty(p[k])||p[key]>p[k])errors[key]='请设置不高于自身的'+{helmet:'头盔',armor:'护甲',ammo:'子弹'}[k]+'门槛'}
-  if(p.strength_range_mode==='custom'&&(!valid(p.strength_min,0,1e9)||!valid(p.strength_max,0,1.3e9)||p.strength_min>p.strength_max))errors.strength_range='请填写有效的实力上下限'
+  if(p.strength_range_mode==='percent'&&(!Number.isInteger(p.strength_tolerance_percent)||!valid(p.strength_tolerance_percent,0,100)))errors.strength_range='请选择有效的实力容差'
+  if(p.strength_range_mode==='custom'&&(!valid(p.strength_min,0,1e9)||!valid(p.strength_max,0,2e9)||p.strength_min>p.strength_max))errors.strength_range='请填写有效的实力上下限'
  }
  return errors
 }

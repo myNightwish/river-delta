@@ -1,8 +1,8 @@
 <template>
  <view ref="anchor" class="help-tooltip" @mouseenter="hoverOpen" @mouseleave="scheduleHide" @focusin="show" @focusout="onBlur" @keydown.esc.stop="hide">
-  <button type="button" class="help-trigger" :aria-label="label" :aria-expanded="opened" :aria-describedby="opened?id:undefined" @click.stop="toggle">?</button>
+  <button type="button" class="help-trigger" :class="tone" :aria-label="label" :aria-expanded="opened" :aria-describedby="opened?id:undefined" @click.stop="toggle">?</button>
   <teleport to="body">
-   <view v-if="opened" :id="id" ref="bubble" class="help-bubble" role="tooltip" :style="{left:position.x+'px',top:position.y+'px',visibility:positioned?'visible':'hidden'}" @mouseenter="cancelHide" @mouseleave="scheduleHide">
+   <view v-if="opened" :id="id" ref="bubble" class="help-bubble" :class="tone" role="tooltip" :style="{left:position.x+'px',top:position.y+'px',visibility:positioned?'visible':'hidden'}" @mouseenter="cancelHide" @mouseleave="scheduleHide">
     <text v-if="text" class="help-copy">{{text}}</text>
     <view v-for="item in items" :key="item.id" class="help-item"><b>{{item.title}}</b><text>{{item.description}}</text></view>
    </view>
@@ -11,7 +11,7 @@
 </template>
 <script setup>
 import {ref,nextTick,onMounted,onBeforeUnmount} from 'vue'
-defineProps({label:{type:String,default:'查看说明'},text:{type:String,default:''},items:{type:Array,default:()=>[]}})
+defineProps({tone:{type:String,default:''},label:{type:String,default:'查看说明'},text:{type:String,default:''},items:{type:Array,default:()=>[]}})
 const anchor=ref(null),bubble=ref(null),opened=ref(false),positioned=ref(false),position=ref({x:12,y:12})
 const id='help-'+Math.random().toString(36).slice(2)
 let hideTimer=null,pinned=false,disposed=false
@@ -30,4 +30,5 @@ onBeforeUnmount(()=>{disposed=true;cancelHide();if(typeof document!=='undefined'
 </script>
 <style scoped>
 .help-tooltip{display:inline-flex;align-items:center;flex-shrink:0;vertical-align:middle}.help-trigger{box-sizing:border-box;display:grid;place-items:center;width:16px;min-width:16px;height:16px;min-height:16px;margin:0;padding:0;border:1px solid #62768e;border-radius:50%;background:transparent;color:#a9bcd3;font-family:Arial,sans-serif;font-size:10px;font-weight:600;line-height:1;cursor:help;transition:border-color .15s,color .15s,background .15s}.help-trigger::after{display:none}.help-trigger:hover,.help-trigger[aria-expanded=true]{border-color:#a6d875;background:#b9f47712;color:#cef4ac}.help-trigger:focus-visible{outline:2px solid #b9f477;outline-offset:3px}.help-bubble{position:fixed;z-index:220;box-sizing:border-box;width:285px;max-width:calc(100vw - 24px);padding:12px 14px;border:1px solid #42556c;border-radius:9px;background:#182331fa;color:#b8c9dd;box-shadow:0 12px 36px #0006;backdrop-filter:blur(10px);font-size:11px;font-weight:400;line-height:1.8;text-align:left;white-space:normal;overflow-wrap:anywhere}.help-copy{display:block}.help-item+.help-item{margin-top:9px;padding-top:9px;border-top:1px solid #2f4055}.help-item b{display:block;font-size:11px;font-weight:650;color:#d5ebc1;margin-bottom:2px}.help-item text{display:block;color:#a8bdd5}
+.help-trigger.warning{color:#e7a2a2;border-color:#a86c76}.help-trigger.warning:hover,.help-trigger.warning[aria-expanded=true]{color:#ffd0c9;border-color:#e7a2a2;background:#e7a2a210}.help-bubble.warning{color:#f1a6a6;border-color:#9c626e}.help-bubble.warning .help-copy{color:#f1a6a6}
 </style>
