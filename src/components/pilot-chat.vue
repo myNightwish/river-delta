@@ -1,22 +1,24 @@
 <template>
   <view class="room">
-    <view class="room-head"><view><view class="room-title">队伍聊天</view><view class="room-note">交换游戏 ID、约好开局时间。消息保留 7 天</view></view><text class="connection">{{connected?'已连接':'连接中'}}</text></view>
-    <view v-if="error" class="chat-error">{{error}}</view>
+    <view class="room-head"><view><view class="room-title">{{ $t("ui.team_chat") }}</view><view class="room-note">{{ $t("ui.exchange_game_ids_and_agree_when_to_start_messages") }}</view></view><text class="connection">{{connected?$t("ui.connected"):$t("ui.connecting")}}</text></view>
+    <view v-if="error" class="chat-error">{{$error(error)}}</view>
     <scroll-view scroll-y class="messages" :scroll-into-view="scrollTarget">
-      <view v-if="!messages.length" class="empty">打个招呼，一起准备开局吧</view>
+      <view v-if="!messages.length" class="empty">{{ $t("ui.say_hello_and_get_ready_to_play") }}</view>
       <view v-for="m in messages" :id="'chat-message-'+m.id" :key="m.id" class="message-line" :class="{mine:m.is_me}">
-        <view class="sender">{{m.is_me?'我':'队友'}} · {{timeLabel(m.created)}}</view>
+        <view class="sender">{{m.is_me?$t("ui.you_294"):$t("profile.partnerLabel")}} · {{timeLabel(m.created)}}</view>
         <view v-if="m.kind==='text'" class="bubble">{{m.content}}</view>
-        <button v-else class="bubble voice-bubble" :disabled="loadingVoice===m.id" @click="playMessage(m)">{{loadingVoice===m.id?'加载中…':playing===m.id?'■ 停止播放':'▶ 语音'}} · {{Math.ceil(m.duration)}} 秒</button>
+        <button v-else class="bubble voice-bubble" :disabled="loadingVoice===m.id" @click="playMessage(m)">{{loadingVoice===m.id?$t("ui.loading"):playing===m.id?$t("ui.stop"):$t("ui.voice_message")}} · {{Math.ceil(m.duration)}} {{ $t("unit.seconds") }}</button>
       </view>
     </scroll-view>
-    <view class="shortcuts"><button :disabled="sending || recording || !!preview" @click="startRecording">录制语音</button></view>
-    <view v-if="recording" class="recording"><text>● 正在录音 {{elapsed}} / 60 秒</text><button @click="stopRecording(false)">取消</button><button @click="stopRecording(true)">完成录音</button></view>
-    <view v-if="preview" class="recording"><text>语音 {{Math.ceil(preview.duration)}} 秒</text><button @click="playPreview">{{playing==='preview'?'停止试听':'试听'}}</button><button :disabled="sending" @click="clearPreview">取消</button><button :disabled="sending" @click="sendVoice">{{sending?'发送中…':'发送语音'}}</button></view>
-    <view class="compose"><input v-model="draft" maxlength="2000" placeholder="和队友说点什么…" confirm-type="send" @confirm="sendDraft"/><button :disabled="sending || !draft.trim()" @click="sendDraft">发送</button></view>
+    <view class="shortcuts"><button :disabled="sending || recording || !!preview" @click="startRecording">{{ $t("ui.record_voice") }}</button></view>
+    <view v-if="recording" class="recording"><text>{{ $t("ui.recording") }} {{elapsed}} {{ $t("ui.60_sec") }}</text><button @click="stopRecording(false)">{{ $t("action.cancel") }}</button><button @click="stopRecording(true)">{{ $t("ui.finish_recording") }}</button></view>
+    <view v-if="preview" class="recording"><text>{{ $t("ui.voice") }} {{Math.ceil(preview.duration)}} {{ $t("unit.seconds") }}</text><button @click="playPreview">{{playing==='preview'?$t("ui.stop_preview"):$t("ui.preview")}}</button><button :disabled="sending" @click="clearPreview">{{ $t("action.cancel") }}</button><button :disabled="sending" @click="sendVoice">{{sending?$t("ui.sending"):$t("ui.send_voice")}}</button></view>
+    <view class="compose"><input v-model="draft" maxlength="2000" :placeholder="$t(&quot;ui.say_something_to_your_teammate&quot;)" confirm-type="send" @confirm="sendDraft"/><button :disabled="sending || !draft.trim()" @click="sendDraft">{{ $t("ui.send") }}</button></view>
   </view>
 </template>
 <script setup>
+import {apiErrorMessage} from '../i18n/api-errors.js'
+import {formatDate} from '../i18n/index.js'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { API_BASE } from '../config.js'
 const props=defineProps({squadId:{type:Number,required:true},token:{type:String,required:true}})
@@ -26,10 +28,10 @@ let polling=null,recordTimer=null,recorder=null,stream=null,startedAt=0,chunks=[
 const voiceUrls=new Map()
 const root=()=>API_BASE+'/pilot/squads/'+props.squadId
 const auth=()=>({Authorization:'Bearer '+props.token})
-const timeLabel=value=>new Date(value).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+const timeLabel=value=>formatDate(value,{hour:'2-digit',minute:'2-digit'})
 async function api(path,options={}){
   const response=await fetch(root()+path,{...options,headers:{...auth(),...(options.headers||{})}})
-  if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(typeof body.detail==='string'?body.detail:'暂时无法发送，请重试')}
+  if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(apiErrorMessage(body))}
   return response
 }
 function merge(items){
@@ -56,8 +58,8 @@ function stopPlayer(){if(player){player.pause();player=null}playing.value=null}
 function playUrl(url,id){
   if(playing.value===id){stopPlayer();return}
   stopPlayer();player=new Audio(url);playing.value=id
-  player.onended=()=>{playing.value=null};player.onerror=()=>{playing.value=null;error.value='无法播放这段语音，请尝试使用其他浏览器'}
-  player.play().catch(()=>{playing.value=null;error.value='无法播放语音，请重试'})
+  player.onended=()=>{playing.value=null};player.onerror=()=>{playing.value=null;error.value='ui.cannot_play_this_audio_try_another_browser'}
+  player.play().catch(()=>{playing.value=null;error.value='ui.cannot_play_this_audio_please_retry'})
 }
 async function playMessage(message){
   error.value='';loadingVoice.value=message.id
@@ -69,26 +71,26 @@ function clearPreview(){if(playing.value==='preview')stopPlayer();if(preview.val
 function releaseMicrophone(){if(stream){stream.getTracks().forEach(track=>track.stop());stream=null}clearInterval(recordTimer);recordTimer=null}
 async function startRecording(){
   error.value=''
-  if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder==='undefined'){error.value='当前浏览器不支持录音，请使用文字或更新浏览器';return}
+  if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder==='undefined'){error.value='ui.recording_is_not_supported_use_text_or_update_your';return}
   try{
     stream=await navigator.mediaDevices.getUserMedia({audio:true})
     if(disposed){releaseMicrophone();return}
     const mime=['audio/webm;codecs=opus','audio/ogg;codecs=opus','audio/mp4'].find(t=>MediaRecorder.isTypeSupported(t))
-    if(!mime){releaseMicrophone();error.value='当前浏览器不支持此语音格式，请使用文字';return}
+    if(!mime){releaseMicrophone();error.value='ui.this_audio_format_is_not_supported_please_use_text';return}
     recorder=new MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:24000});chunks=[];startedAt=Date.now();elapsed.value=0;keepRecording=true
     recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)}
     recorder.onstop=()=>{
       releaseMicrophone();recording.value=false
       if(disposed || !keepRecording)return
       const blob=new Blob(chunks,{type:mime});const duration=Math.min(60,(Date.now()-startedAt)/1000)
-      if(!blob.size || duration<0.3){error.value='录音太短，请再试一次';return}
-      if(blob.size>1024*1024){error.value='语音过大，请缩短后重录';return}
+      if(!blob.size || duration<0.3){error.value='ui.recording_is_too_short_please_retry';return}
+      if(blob.size>1024*1024){error.value='ui.audio_is_too_large_try_a_shorter_recording';return}
       preview.value={blob,url:URL.createObjectURL(blob),duration,mime}
     }
-    recorder.onerror=()=>{keepRecording=false;recording.value=false;releaseMicrophone();error.value='录音中断，请重试'}
+    recorder.onerror=()=>{keepRecording=false;recording.value=false;releaseMicrophone();error.value='ui.recording_was_interrupted_please_retry'}
     recorder.start();recording.value=true
     recordTimer=setInterval(()=>{elapsed.value=Math.min(60,Math.floor((Date.now()-startedAt)/1000));if(elapsed.value>=60)stopRecording(true)},250)
-  }catch(e){releaseMicrophone();error.value=e.name==='NotAllowedError'?'未获得麦克风权限，你仍可发送文字':'无法使用麦克风，请检查设备后重试'}
+  }catch(e){releaseMicrophone();error.value=e.name==='NotAllowedError'?'ui.microphone_access_is_unavailable_you_can_still_send_text':'ui.cannot_access_your_microphone_check_your_device_and_retry'}
 }
 function stopRecording(keep){keepRecording=keep;if(recorder?.state==='recording')recorder.stop();else{recording.value=false;releaseMicrophone()}}
 async function sendVoice(){

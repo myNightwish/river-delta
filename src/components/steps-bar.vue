@@ -21,5 +21,5 @@ defineProps({
   current: { type: Number, default: 1 },
 })
 
-const steps = ['01 登录', '02 选岛屿', '03 建档案', '04 免费上岛', '05 付费匹配']
+const steps = ['ui.01_sign_in', 'ui.02_choose_island', 'ui.03_profile', 'ui.04_free_island', 'ui.05_paid_matching']
 </script>

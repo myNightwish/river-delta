@@ -1,19 +1,20 @@
 <template>
   <view v-if="items.length || loading || error" class="recent-squads">
-    <view class="recent-heading"><text>最近组局</text><button @click="expanded=!expanded">{{expanded?'收起':'查看历史'}} <text>{{expanded?'⌃':'⌄'}}</text></button></view>
+    <view class="recent-heading"><text>{{ $t("ui.recent_teams") }}</text><button @click="expanded=!expanded">{{expanded?$t("ui.collapse"):$t("ui.view_history")}} <text>{{expanded?'⌃':'⌄'}}</text></button></view>
     <view v-if="expanded">
-      <view v-if="error" class="history-error">{{error}}<button @click="load()">重试</button></view>
-      <view v-for="s in otherSquads" :key="s.id" class="history-row"><view class="history-main"><b>{{s.peer_nickname}}</b><view class="history-meta"><text>{{s.goal}}</text><text>{{s.map}} · {{s.difficulty}}</text><text>{{dateLabel(s.created)}}</text></view></view><button class="open-chat" @click="openChat(s)">查看聊天 <text>↗</text></button></view>
-      <view v-if="!otherSquads.length && !loading" class="history-empty">暂无更早的组局</view>
-      <button v-if="nextBefore" class="more-history" :disabled="loading" @click="load(true)">{{loading?'加载中…':'更早的组局'}}</button>
+      <view v-if="error" class="history-error">{{$error(error)}}<button @click="load()">{{ $t("action.retry") }}</button></view>
+      <view v-for="s in otherSquads" :key="s.id" class="history-row"><view class="history-main"><b>{{s.peer_nickname}}</b><view class="history-meta"><text>{{$t(s.goal)}}</text><text>{{$t(s.map)}} · {{$t(s.difficulty)}}</text><text>{{dateLabel(s.created)}}</text></view></view><button class="open-chat" @click="openChat(s)">{{ $t("ui.view_chat") }} <text>↗</text></button></view>
+      <view v-if="!otherSquads.length && !loading" class="history-empty">{{ $t("ui.no_earlier_sessions") }}</view>
+      <button v-if="nextBefore" class="more-history" :disabled="loading" @click="load(true)">{{loading?$t("ui.loading"):$t("ui.earlier_sessions")}}</button>
     </view>
   </view>
-  <view v-if="selected" class="history-overlay" @click.self="closeChat"><view class="history-dialog" role="dialog" aria-modal="true" aria-label="历史队伍聊天" tabindex="-1" @keydown.esc.stop="closeChat" @keydown.tab="trapFocus">
-    <view class="dialog-heading"><view><b>{{selected.peer_nickname}}</b><text>{{selected.goal}} · {{selected.map}} · {{selected.difficulty}}</text></view><button aria-label="关闭历史聊天" @click="closeChat">×</button></view>
+  <view v-if="selected" class="history-overlay" @click.self="closeChat"><view class="history-dialog" role="dialog" aria-modal="true" :aria-label="$t(&quot;ui.past_team_chat&quot;)" tabindex="-1" @keydown.esc.stop="closeChat" @keydown.tab="trapFocus">
+    <view class="dialog-heading"><view><b>{{selected.peer_nickname}}</b><text>{{$t(selected.goal)}} · {{$t(selected.map)}} · {{$t(selected.difficulty)}}</text></view><button :aria-label="$t(&quot;ui.close_past_chat&quot;)" @click="closeChat">×</button></view>
     <view class="dialog-chat"><pilot-chat :key="token+':'+selected.id" :squad-id="selected.id" :token="token"/></view>
   </view></view>
 </template>
 <script setup>
+import {formatDate} from '../i18n/index.js'
 import {computed,ref,watch,onBeforeUnmount,nextTick} from 'vue'
 import PilotChat from './pilot-chat.vue'
 import {authRequest} from '../utils/pilot-session.js'
@@ -21,7 +22,7 @@ const props=defineProps({token:{type:String,required:true},currentSquadId:Number
 const items=ref([]),nextBefore=ref(null),expanded=ref(false),loading=ref(false),error=ref(''),selected=ref(null)
 const otherSquads=computed(()=>items.value.filter(s=>s.id!==props.currentSquadId))
 let generation=0,disposed=false,locked=false,bodyOverflow='',rootOverflow='',priorFocus=null
-const dateLabel=value=>new Date(value).toLocaleString([],{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
+const dateLabel=value=>formatDate(value,{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
 async function load(more=false){
  const id=++generation,identity=props.token;loading.value=true;error.value=''
  try{const result=await authRequest('squads/recent'+(more&&nextBefore.value?'?before='+nextBefore.value:''));if(disposed||id!==generation||identity!==props.token)return;items.value=more?[...items.value,...result.items]:result.items;nextBefore.value=result.next_before}

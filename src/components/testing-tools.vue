@@ -1,28 +1,28 @@
 <template>
- <button class="test-entry" @click="open=true">测试入口</button>
- <view v-if="open" class="test-overlay" @click.self="close"><view class="test-dialog" :class="{unlocked:access}" role="dialog" aria-modal="true" aria-label="匹配测试工具" tabindex="-1" @keydown.esc.stop="close" @keydown.tab="trapFocus">
-  <view class="test-head"><view><b>{{access?'匹配测试工具':'解锁测试入口'}}</b><text>{{access?'生成模拟队友，你只需操作自己':'输入测试口令后使用测试工具'}}</text></view><button aria-label="关闭测试工具" @click="close">×</button></view>
+ <button class="test-entry" @click="open=true">{{ $t("ui.testing_tools") }}</button>
+ <view v-if="open" class="test-overlay" @click.self="close"><view class="test-dialog" :class="{unlocked:access}" role="dialog" aria-modal="true" :aria-label="$t(&quot;ui.matching_test_tools&quot;)" tabindex="-1" @keydown.esc.stop="close" @keydown.tab="trapFocus">
+  <view class="test-head"><view><b>{{access?$t("ui.matching_test_tools"):$t("ui.unlock_testing_tools")}}</b><text>{{access?$t("ui.generate_simulated_teammates_control_only_your_own_player"):$t("ui.enter_your_test_passcode_to_use_these_tools")}}</text></view><button :aria-label="$t(&quot;ui.close_test_tools&quot;)" @click="close">×</button></view>
   <view class="test-content">
-   <view v-if="!access"><input v-model="code" password maxlength="128" placeholder="测试口令" @confirm="unlock"/><button class="test-primary unlock" :disabled="busy||!code" @click="unlock">{{busy?'验证中…':'解锁'}}</button></view>
+   <view v-if="!access"><input v-model="code" password maxlength="128" :placeholder="$t(&quot;ui.test_passcode&quot;)" @confirm="unlock"/><button class="test-primary unlock" :disabled="busy||!code" @click="unlock">{{busy?$t("ui.verifying"):$t("ui.unlock")}}</button></view>
    <view v-else>
-    <view class="sim-options"><view><text>使用条件</text><view class="player-tabs"><button :class="{chosen:source==='example'}" @click="source='example'">示例条件</button><button :class="{chosen:source==='current'}" @click="source='current'">当前条件</button></view></view><view><text>队友响应</text><dark-select v-model="behaviorLabel" :options="Object.values(behaviorNames)" label="模拟队友响应"/></view></view>
-    <view class="sim-actions"><button class="test-primary" :disabled="busy" @click="generate">{{busy?'处理中…':activeRun?'重新生成 8 位队友':'生成 8 位模拟队友'}}</button><button :disabled="busy||(!activeRun&&!canReturn)" @click="clearRun">清理本轮测试</button><button v-if="activeRun" :disabled="busy" @click="enterHall">进入招募大厅 ↗</button></view>
-    <view class="test-note">自动发布本轮招募，独立测试池，模拟队友持续在线 15 分钟</view>
-    <view v-if="activeRun" class="sim-results"><view class="sim-summary"><b>本轮模拟队友</b><text>{{Math.ceil(activeRun.remaining_seconds/60)}} 分钟后结束 · {{behaviorNames[activeRun.behavior]}}</text></view><view class="sim-row sim-labels"><text>场景</text><text>预期</text><text>实际条件</text><text>状态</text></view><view v-for="bot in activeRun.bots" :key="bot.label" class="sim-row"><text>{{bot.label}}</text><text :class="bot.expected_eligible?'pass':'muted'">{{bot.expected_eligible?'兼容':'冲突'}}</text><text :class="bot.eligible===bot.expected_eligible?'pass':'fail'">{{bot.eligible?'兼容':'冲突'}} {{bot.eligible===bot.expected_eligible?'✓':'×'}}</text><text>{{ticketNames[bot.status]||bot.status}}</text></view></view>
-    <button class="advanced-toggle" @click="advanced=!advanced">{{advanced?'收起高级 JSON':'高级 JSON 导入'}} {{advanced?'⌃':'⌄'}}</button>
+    <view class="sim-options"><view><text>{{ $t("ui.use_conditions") }}</text><view class="player-tabs"><button :class="{chosen:source==='example'}" @click="source='example'">{{ $t("ui.example_conditions") }}</button><button :class="{chosen:source==='current'}" @click="source='current'">{{ $t("ui.current_conditions") }}</button></view></view><view><text>{{ $t("ui.teammate_response") }}</text><dark-select v-model="behavior" :options="Object.keys(behaviorNames)" :option-labels="behaviorNames" :label="$t(&quot;ui.simulated_response&quot;)"/></view></view>
+    <view class="sim-actions"><button class="test-primary" :disabled="busy" @click="generate">{{busy?$t("ui.working"):activeRun?$t("ui.regenerate_8_teammates"):$t("ui.generate_8_teammates")}}</button><button :disabled="busy||(!activeRun&&!canReturn)" @click="clearRun">{{ $t("ui.clean_up_this_test") }}</button><button v-if="activeRun" :disabled="busy" @click="enterHall">{{ $t("ui.open_recruitment_hall") }}</button></view>
+    <view class="test-note">{{ $t("ui.publishes_in_an_isolated_test_pool_simulated_teammates_remain") }}</view>
+    <view v-if="activeRun" class="sim-results"><view class="sim-summary"><b>{{ $t("ui.simulated_teammates") }}</b><text>{{Math.ceil(activeRun.remaining_seconds/60)}} {{ $t("ui.minutes_remaining") }} {{$t(behaviorNames[activeRun.behavior])}}</text></view><view class="sim-row sim-labels"><text>{{ $t("ui.scenario") }}</text><text>{{ $t("ui.expected") }}</text><text>{{ $t("ui.actual_conditions") }}</text><text>{{ $t("ui.status") }}</text></view><view v-for="bot in activeRun.bots" :key="bot.label" class="sim-row"><text>{{$t(bot.label)}}</text><text :class="bot.expected_eligible?'pass':'muted'">{{bot.expected_eligible?$t("ui.compatible_520"):$t("ui.conflict")}}</text><text :class="bot.eligible===bot.expected_eligible?'pass':'fail'">{{bot.eligible?$t("ui.compatible_520"):$t("ui.conflict")}} {{bot.eligible===bot.expected_eligible?'✓':'×'}}</text><text>{{$t(ticketNames[bot.status]||bot.status)}}</text></view></view>
+    <button class="advanced-toggle" @click="advanced=!advanced">{{advanced?$t("ui.hide_advanced_json"):$t("ui.advanced_json_import")}} {{advanced?'⌃':'⌄'}}</button>
     <view v-if="advanced">
-    <view class="scenario-picker"><dark-select :model-value="scenarioTitle" :options="scenarios.map(s=>s.title)" label="测试场景" @update:model-value="chooseScenario"/><view class="player-tabs"><button v-for="(p,i) in scenario?.players||[]" :key="i" :class="{chosen:playerIndex===i}" @click="choosePlayer(i)">玩家 {{String.fromCharCode(65+i)}}</button></view></view>
-    <view class="expected"><b>预期结果</b><text>{{scenario?.expected}}</text></view>
-    <view class="editor-label"><b>玩家招募 JSON</b><button @click="readFile">读取 JSON 文件</button></view>
-    <textarea v-model="jsonText" class="json-editor" :maxlength="20000" spellcheck="false" placeholder="粘贴一份玩家招募 JSON"/>
-    <view class="import-actions"><button :disabled="busy||!!activeRun" @click="importProfile(false)">导入当前玩家</button><button class="test-primary" :disabled="busy||!!activeRun" @click="importProfile(true)">新建测试玩家并导入</button></view>
-    <view class="test-note">正在招募时不覆盖当前玩家，可在普通与无痕窗口分别导入 A / B</view>
-    <view v-if="personas.length" class="persona-list"><b>已导入的测试玩家</b><view><button v-for="p in personas" :key="p.token" :disabled="busy||!!activeRun" :class="{chosen:p.token===sessionToken}" @click="switchPersona(p)">{{p.profile.nickname}}</button></view></view>
+    <view class="scenario-picker"><dark-select :model-value="scenarioId" :options="scenarios.map(s=>s.id)" :option-labels="Object.fromEntries(scenarios.map(s=>[s.id,s.title]))" :label="$t(&quot;ui.test_scenario&quot;)" @update:model-value="chooseScenario"/><view class="player-tabs"><button v-for="(p,i) in scenario?.players||[]" :key="i" :class="{chosen:playerIndex===i}" @click="choosePlayer(i)">{{ $t("ui.player") }} {{String.fromCharCode(65+i)}}</button></view></view>
+    <view class="expected"><b>{{ $t("ui.expected_result") }}</b><text>{{$t(scenario?.expected)}}</text></view>
+    <view class="editor-label"><b>{{ $t("ui.player_listing_json") }}</b><button @click="readFile">{{ $t("ui.read_json_file") }}</button></view>
+    <textarea v-model="jsonText" class="json-editor" :maxlength="20000" spellcheck="false" :placeholder="$t(&quot;ui.paste_a_player_listing_json&quot;)"/>
+    <view class="import-actions"><button :disabled="busy||!!activeRun" @click="importProfile(false)">{{ $t("ui.import_current_player") }}</button><button class="test-primary" :disabled="busy||!!activeRun" @click="importProfile(true)">{{ $t("ui.create_import_test_player") }}</button></view>
+    <view class="test-note">{{ $t("ui.active_listings_are_not_overwritten_import_a_and_b") }}</view>
+    <view v-if="personas.length" class="persona-list"><b>{{ $t("ui.imported_test_player") }}</b><view><button v-for="p in personas" :key="p.token" :disabled="busy||!!activeRun" :class="{chosen:p.token===sessionToken}" @click="switchPersona(p)">{{p.profile.nickname}}</button></view></view>
     </view>
    </view>
-   <view v-if="message" class="test-message" role="alert">{{message}}</view>
+   <view v-if="message" class="test-message" role="alert">{{$error(message)}}</view>
   </view>
-  <view v-if="access" class="test-bottom"><text>测试玩家不计入真实匹配效果统计</text><button :disabled="busy" @click="lock">锁定入口</button></view>
+  <view v-if="access" class="test-bottom"><text>{{ $t("ui.test_players_are_excluded_from_real_matching_metrics") }}</text><button :disabled="busy" @click="lock">{{ $t("ui.lock_tools") }}</button></view>
  </view></view>
 </template>
 <script setup>
@@ -32,9 +32,9 @@ import {authRequest,sessionToken} from '../utils/pilot-session.js'
 const props=defineProps({getDraft:Function})
 const emit=defineEmits(['import','simulation-start','hall'])
 const open=ref(false),code=ref(''),access=ref(''),busy=ref(false),message=ref(''),scenarios=ref([]),scenarioId=ref(''),playerIndex=ref(0),jsonText=ref(''),personas=ref([])
-const advanced=ref(false),source=ref('example'),behaviorLabel=ref('自动确认'),activeRun=ref(null),canReturn=ref(false)
-const behaviorNames={accept:'自动确认',reject:'自动拒绝',timeout:'超时不响应'},ticketNames={waiting:'招募中',matched:'已保留',cancelled:'已取消',done:'已完成',expired:'已过期'}
-const scenario=computed(()=>scenarios.value.find(s=>s.id===scenarioId.value)),scenarioTitle=computed(()=>scenario.value?.title||'选择场景')
+const advanced=ref(false),source=ref('example'),behavior=ref('accept'),activeRun=ref(null),canReturn=ref(false)
+const behaviorNames={accept:'ui.auto_confirm',reject:'ui.auto_decline',timeout:'ui.no_response_timeout'},ticketNames={waiting:'status.recruiting',matched:'ui.kept',cancelled:'ui.cancelled',done:'ui.completed',expired:'ui.expired'}
+const scenario=computed(()=>scenarios.value.find(s=>s.id===scenarioId.value))
 let oldBody='',oldRoot='',locked=false,previousFocus=null,accessOwner='',runLoadId=0,returnPersona=null
 try{returnPersona=JSON.parse(sessionStorage.getItem('pilot-simulation-return')||'null')}catch{}
 canReturn.value=!!returnPersona
@@ -45,10 +45,10 @@ function trapFocus(event){if(typeof document==='undefined')return;const dialog=d
 function restoreScroll(){if(!locked||typeof document==='undefined')return;document.body.style.overflow=oldBody;document.documentElement.style.overflow=oldRoot;locked=false;previousFocus?.focus?.()}
 watch(open,async shown=>{if(typeof document==='undefined')return;if(shown){oldBody=document.body.style.overflow;oldRoot=document.documentElement.style.overflow;previousFocus=document.activeElement;locked=true;document.body.style.overflow='hidden';document.documentElement.style.overflow='hidden';await nextTick();document.querySelector('.test-dialog')?.focus();if(access.value)loadRun()}else restoreScroll()})
 function choosePlayer(i){playerIndex.value=i;jsonText.value=JSON.stringify(scenario.value.players[i],null,2);message.value=''}
-function chooseScenario(title){scenarioId.value=scenarios.value.find(s=>s.title===title).id;choosePlayer(0)}
+function chooseScenario(id){scenarioId.value=id;choosePlayer(0)}
 async function unlock(){
  if(busy.value)return;busy.value=true;message.value=''
- try{const result=await authRequest('testing/unlock',{code:code.value});accessOwner=sessionToken.value;access.value=result.access_token;code.value='';const data=await authRequest('testing/scenarios',{access_token:access.value});scenarios.value=data.scenarios;chooseScenario(scenarios.value[0].title);await loadRun()}
+ try{const result=await authRequest('testing/unlock',{code:code.value});accessOwner=sessionToken.value;access.value=result.access_token;code.value='';const data=await authRequest('testing/scenarios',{access_token:access.value});scenarios.value=data.scenarios;chooseScenario(scenarios.value[0].id);await loadRun()}
  catch(e){access.value='';message.value=e.message}finally{busy.value=false}
 }
 async function loadRun(){
@@ -60,14 +60,14 @@ async function generate(){
  if(busy.value)return;busy.value=true;message.value='';runLoadId++
  try{
   const original={token:sessionToken.value,access:access.value,profile:props.getDraft?.()||{}}
-  const result=await authRequest('testing/simulation/start',{access_token:access.value,profile:source.value==='current'?original.profile:null,behavior:Object.keys(behaviorNames).find(k=>behaviorNames[k]===behaviorLabel.value)})
+  const result=await authRequest('testing/simulation/start',{access_token:access.value,profile:source.value==='current'?original.profile:null,behavior:behavior.value})
   if(!returnPersona){returnPersona=original;canReturn.value=true;storeReturn()}
   accessOwner=result.token;access.value=result.access_token;activeRun.value=result.run;personas.value=[];advanced.value=false;emit('simulation-start',result)
  }catch(e){message.value=e.message}finally{busy.value=false}
 }
 async function clearRun(){
  if(busy.value)return;busy.value=true;message.value='';runLoadId++
- try{await authRequest('testing/simulation/stop',{access_token:access.value});activeRun.value=null;if(returnPersona){const saved=returnPersona;returnPersona=null;canReturn.value=false;storeReturn();accessOwner=saved.token;access.value=saved.access;emit('import',{token:saved.token,profile:saved.profile})}message.value='本轮测试已清理'}
+ try{await authRequest('testing/simulation/stop',{access_token:access.value});activeRun.value=null;if(returnPersona){const saved=returnPersona;returnPersona=null;canReturn.value=false;storeReturn();accessOwner=saved.token;access.value=saved.access;emit('import',{token:saved.token,profile:saved.profile})}message.value='ui.test_cleaned_up'}
  catch(e){message.value=e.message}finally{busy.value=false}
 }
 function enterHall(){emit('hall');close()}
@@ -75,14 +75,14 @@ const polling=setInterval(()=>{if(open.value&&access.value&&!busy.value)loadRun(
 function readFile(){
  if(typeof document==='undefined')return
  const input=document.createElement('input');input.type='file';input.accept='.json,application/json'
- input.onchange=async()=>{const file=input.files?.[0];if(!file)return;if(file.size>16384){message.value='JSON 文件不能超过 16 KB';return}try{jsonText.value=await file.text();message.value=''}catch{message.value='无法读取文件，请直接粘贴 JSON'}}
+ input.onchange=async()=>{const file=input.files?.[0];if(!file)return;if(file.size>16384){message.value='ui.json_files_cannot_exceed_16_kb';return}try{jsonText.value=await file.text();message.value=''}catch{message.value='ui.could_not_read_the_file_paste_the_json_directly'}}
  input.click()
 }
 async function importProfile(newIdentity){
- if(activeRun.value){message.value='请先清理本轮测试，再使用 JSON 导入';return}
+ if(activeRun.value){message.value='ui.clean_up_the_current_test_before_importing_json';return}
  if(busy.value)return;busy.value=true;message.value=''
- try{const profile=JSON.parse(jsonText.value);if(!profile||typeof profile!=='object'||Array.isArray(profile))throw new Error('每次导入一位玩家的 JSON 对象');const result=await authRequest('testing/import',{access_token:access.value,profile,new_identity:newIdentity});accessOwner=result.token||sessionToken.value;access.value=result.access_token;const credential=accessOwner;const p={token:credential,access:result.access_token,profile:result.profile};personas.value=[...personas.value.filter(x=>x.token!==credential),p].slice(-20);emit('import',result);busy.value=false;close()}
- catch(e){if(e.status===403||e.status===503){access.value='';scenarios.value=[];code.value=''}message.value=e instanceof SyntaxError?'JSON 格式不正确，请检查逗号与引号':e.message}finally{busy.value=false}
+ try{const profile=JSON.parse(jsonText.value);if(!profile||typeof profile!=='object'||Array.isArray(profile))throw new Error('ui.import_one_player_s_json_object_at_a_time');const result=await authRequest('testing/import',{access_token:access.value,profile,new_identity:newIdentity});accessOwner=result.token||sessionToken.value;access.value=result.access_token;const credential=accessOwner;const p={token:credential,access:result.access_token,profile:result.profile};personas.value=[...personas.value.filter(x=>x.token!==credential),p].slice(-20);emit('import',result);busy.value=false;close()}
+ catch(e){if(e.status===403||e.status===503){access.value='';scenarios.value=[];code.value=''}message.value=e instanceof SyntaxError?'ui.invalid_json_check_commas_and_quotation_marks':e.message}finally{busy.value=false}
 }
 function switchPersona(p){accessOwner=p.token;access.value=p.access;emit('import',{token:p.token,profile:p.profile});close()}
 async function lock(){busy.value=true;try{await authRequest('testing/lock',{access_token:access.value});access.value='';scenarios.value=[];personas.value=[];jsonText.value='';message.value=''}catch(e){message.value=e.message}finally{busy.value=false}}

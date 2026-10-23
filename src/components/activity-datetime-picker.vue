@@ -1,20 +1,21 @@
 <template>
  <view class="activity-datetime" @keydown.esc.stop="calendarOpen=false">
   <view class="datetime-controls">
-   <view><text class="field-caption">日期</text><button tabindex="0" ref="dateTrigger" class="date-trigger" :aria-expanded="calendarOpen" aria-label="选择活动日期" @click="toggleCalendar"><text>{{dateValue}}</text><text class="calendar-icon">▦</text></button></view>
-   <view><text class="field-caption">时间</text><view class="clock-controls"><dark-select :model-value="hour" :options="hours" label="小时" @update:model-value="setTime($event,minute)"/><text class="clock-separator">:</text><dark-select :model-value="minute" :options="minutes" label="分钟" @update:model-value="setTime(hour,$event)"/></view></view>
+   <view><text class="field-caption">{{ $t("ui.date") }}</text><button tabindex="0" ref="dateTrigger" class="date-trigger" :aria-expanded="calendarOpen" :aria-label="$t(&quot;ui.select_event_date&quot;)" @click="toggleCalendar"><text>{{dateValue}}</text><text class="calendar-icon">▦</text></button></view>
+   <view><text class="field-caption">{{ $t("ui.time") }}</text><view class="clock-controls"><dark-select :model-value="hour" :options="hours" :label="$t(&quot;ui.hour&quot;)" @update:model-value="setTime($event,minute)"/><text class="clock-separator">:</text><dark-select :model-value="minute" :options="minutes" :label="$t(&quot;ui.minute&quot;)" @update:model-value="setTime(hour,$event)"/></view></view>
   </view>
-  <view v-if="calendarOpen" class="calendar" role="group" aria-label="选择活动日期日历">
-   <view class="calendar-head"><button tabindex="0" :disabled="!canPrev" aria-label="上个月" @click="moveMonth(-1)">‹</button><b>{{year}} 年 {{month+1}} 月</b><button tabindex="0" :disabled="!canNext" aria-label="下个月" @click="moveMonth(1)">›</button></view>
-   <view class="calendar-grid weekdays"><text v-for="day in weekdays" :key="day">{{day}}</text></view>
-   <view class="calendar-grid"><button v-for="(cell,index) in cells" :key="index" tabindex="0" :disabled="!cell.date||cell.date<today||cell.date>lastDate" :class="{selected:cell.date===dateValue,today:cell.date===today,blank:!cell.date}" :aria-label="cell.date||'空白日期'" :aria-pressed="cell.date===dateValue" @click="chooseDate(cell.date)">{{cell.day||''}}</button></view>
-   <view class="calendar-footer"><text>可选未来 30 天</text><button tabindex="0" @click="chooseDate(today)">今天</button></view>
+  <view v-if="calendarOpen" class="calendar" role="group" :aria-label="$t(&quot;ui.event_date_calendar&quot;)">
+   <view class="calendar-head"><button tabindex="0" :disabled="!canPrev" :aria-label="$t(&quot;ui.previous_month&quot;)" @click="moveMonth(-1)">‹</button><b>{{monthTitle}}</b><button tabindex="0" :disabled="!canNext" :aria-label="$t(&quot;ui.next_month&quot;)" @click="moveMonth(1)">›</button></view>
+   <view class="calendar-grid weekdays"><text v-for="day in weekdays" :key="day">{{$t(day)}}</text></view>
+   <view class="calendar-grid"><button v-for="(cell,index) in cells" :key="index" tabindex="0" :disabled="!cell.date||cell.date<today||cell.date>lastDate" :class="{selected:cell.date===dateValue,today:cell.date===today,blank:!cell.date}" :aria-label="cell.date||$t(&quot;ui.empty_date&quot;)" :aria-pressed="cell.date===dateValue" @click="chooseDate(cell.date)">{{cell.day||''}}</button></view>
+   <view class="calendar-footer"><text>{{ $t("ui.choose_within_the_next_30_days") }}</text><button tabindex="0" @click="chooseDate(today)">{{ $t("ui.today") }}</button></view>
   </view>
  </view>
 </template>
 <script setup>
 import {ref,computed,watch,nextTick} from 'vue'
 import DarkSelect from './dark-select.vue'
+import {formatDate} from '../i18n/index.js'
 import {localDateString,activityDateDefault,monthCells} from '../utils/growth-ui.js'
 const props=defineProps({modelValue:{type:String,default:''}})
 const emit=defineEmits(['update:modelValue'])
@@ -24,7 +25,8 @@ const hour=computed(()=>(props.modelValue.split(' ')[1]||'00:00').slice(0,2))
 const minute=computed(()=>(props.modelValue.split(' ')[1]||'00:00').slice(3,5))
 const year=ref(Number(dateValue.value.slice(0,4))),month=ref(Number(dateValue.value.slice(5,7))-1)
 const hours=Array.from({length:24},(_,n)=>String(n).padStart(2,'0')),minutes=Array.from({length:60},(_,n)=>String(n).padStart(2,'0'))
-const weekdays=['日','一','二','三','四','五','六']
+const monthTitle=computed(()=>formatDate(new Date(year.value,month.value,1),{year:'numeric',month:'long'}))
+const weekdays=['ui.sun','ui.mon','ui.tue','ui.wed','ui.thu','ui.fri','ui.sat']
 const today=computed(()=>localDateString(current.value))
 const lastDate=computed(()=>{const d=new Date(current.value);d.setDate(d.getDate()+30);return localDateString(d)})
 const monthKey=computed(()=>year.value*12+month.value)

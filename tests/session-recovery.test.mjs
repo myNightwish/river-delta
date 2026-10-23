@@ -22,12 +22,12 @@ test('network errors, 503 and generic 401 never replace identity',async()=>{
 })
 test('failed registration retains old identity and later recovery can retry',async()=>{
  let attempts=0;const c=setup(async path=>{if(path==='participants'){if(++attempts===1)throw new Error('offline');return {token:'new'}}throw invalid()})
- await assert.rejects(c.request('invite',{}));assert.equal(c.getToken(),'old');await assert.rejects(c.request('invite',{}),/身份已恢复/);assert.equal(c.getToken(),'new')
+ await assert.rejects(c.request('invite',{}));assert.equal(c.getToken(),'old');await assert.rejects(c.request('invite',{}),/ui.your_session_was_restored_and_your_draft_kept_please/);assert.equal(c.getToken(),'new')
 })
 test('mutating actions are not automatically replayed',async()=>{
  for(const path of ['join','invite','confirm','cancel','feedback']){
   let actions=0;const c=setup(async name=>{if(name==='participants')return {token:'new'};actions++;throw invalid()})
-  await assert.rejects(c.request(path,{}),/重新操作/);assert.equal(actions,1);assert.equal(c.getToken(),'new')
+  await assert.rejects(c.request(path,{}),/ui.your_session_was_restored_and_your_draft_kept_please/);assert.equal(actions,1);assert.equal(c.getToken(),'new')
  }
 })
 test('late recovery cannot overwrite a newly logged in phone session',async()=>{

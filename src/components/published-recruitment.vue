@@ -1,14 +1,15 @@
 <template>
- <view class="detail-overlay" @click.self="$emit('close')" @keydown.esc.stop="$emit('close')"><view ref="dialog" class="detail-dialog" role="dialog" aria-modal="true" aria-label="已发布的招募详情" tabindex="-1" @keydown.tab="trapFocus"><view class="detail-head"><view><b>已发布的招募详情</b><view class="meta"><text class="status">{{statusLabel}}</text><text>{{created}}</text></view><text class="caption">以下是实际已发布的条件</text></view><button tabindex="0" class="close" aria-label="关闭招募详情" @click="$emit('close')">×</button></view><view class="detail-body"><view v-for="row in rows" :key="row.key" class="detail-row"><text class="detail-key">{{row.label}}</text><view class="tags"><text v-for="(value,index) in row.values" :key="index">{{value}}</text><text v-if="!row.values.length">未填写</text></view></view></view><view class="detail-footer"><button tabindex="0" @click="$emit('close')">关闭</button></view></view></view>
+ <view class="detail-overlay" @click.self="$emit('close')" @keydown.esc.stop="$emit('close')"><view ref="dialog" class="detail-dialog" role="dialog" aria-modal="true" :aria-label="$t(&quot;ui.published_listing_details&quot;)" tabindex="-1" @keydown.tab="trapFocus"><view class="detail-head"><view><b>{{ $t("ui.published_listing_details") }}</b><view class="meta"><text class="status">{{$t(statusLabel)}}</text><text>{{created}}</text></view><text class="caption">{{ $t("ui.these_are_your_published_conditions") }}</text></view><button tabindex="0" class="close" :aria-label="$t(&quot;ui.close_listing_details&quot;)" @click="$emit('close')">×</button></view><view class="detail-body"><view v-for="row in rows" :key="row.key" class="detail-row"><text class="detail-key">{{row.label}}</text><view class="tags"><text v-for="(value,index) in row.values" :key="index">{{value}}</text><text v-if="!row.values.length">{{ $t("ui.not_entered") }}</text></view></view></view><view class="detail-footer"><button tabindex="0" @click="$emit('close')">{{ $t("action.close") }}</button></view></view></view>
 </template>
 <script setup>
+import {t,formatDate} from '../i18n/index.js'
 import {computed,ref,nextTick,onMounted,onBeforeUnmount} from 'vue'
 import {publishedRecruitmentDetails} from '../utils/recruitment-comparison.js'
 const props=defineProps({ticket:{type:Object,required:true}})
 defineEmits(['close'])
 const dialog=ref(null),rows=computed(()=>publishedRecruitmentDetails(props.ticket.profile))
-const statusLabel=computed(()=>({waiting:'招募中',matched:'已匹配到队友',expired:'已过期',cancelled:'已取消',replaced:'已重新发布',done:'已完成'}[props.ticket.status]||'招募已结束'))
-const created=computed(()=>props.ticket.created?'发布于 '+new Date(props.ticket.created).toLocaleString(undefined,{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}):'')
+const statusLabel=computed(()=>({waiting:'status.recruiting',matched:'ui.teammate_found',expired:'ui.expired',cancelled:'ui.cancelled',replaced:'ui.replaced',done:'ui.completed'}[props.ticket.status]||'ui.listing_ended'))
+const created=computed(()=>props.ticket.created?t('message.publishedAt',{time:formatDate(props.ticket.created,{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})}):'')
 let lastFocus=null,bodyOverflow='',rootOverflow=''
 const element=()=>dialog.value?.$el||dialog.value
 onMounted(async()=>{if(typeof document==='undefined')return;lastFocus=document.activeElement;bodyOverflow=document.body.style.overflow;rootOverflow=document.documentElement.style.overflow;document.body.style.overflow='hidden';document.documentElement.style.overflow='hidden';await nextTick();element()?.focus()})

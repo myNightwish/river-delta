@@ -6,7 +6,7 @@ export function createSessionClient({getToken,setToken,send}) {
     if(registration)return registration
     registration=(async()=>{
       const result=await send('participants',{},'')
-      if(!result?.token)throw new Error('暂时无法恢复身份，请稍后重试')
+      if(!result?.token)throw new Error('ui.cannot_restore_your_session_please_try_again_later')
       if(getToken()===staleToken)setToken(result.token)
       return getToken()
     })()
@@ -19,7 +19,7 @@ export function createSessionClient({getToken,setToken,send}) {
       await register(identity)
       // Reading is safe to retry; never replay an invitation, confirmation or other action
       if(data===undefined)return send(path,data,getToken())
-      throw new Error('身份已恢复，填写的资料已保留，请重新操作')
+      throw new Error('ui.your_session_was_restored_and_your_draft_kept_please')
     }
   }
   return {request,ensureAnonymous:()=>getToken()?Promise.resolve(getToken()):register('')}

@@ -1,5 +1,5 @@
 <template>
- <transition name="app-toast"><view v-if="message" class="app-toast-box" :class="type" :role="type==='error'?'alert':'status'" :aria-live="type==='error'?'assertive':'polite'"><text class="toast-icon">{{type==='error'?'!':'✓'}}</text><text>{{message}}</text></view></transition>
+ <transition name="app-toast"><view v-if="message" class="app-toast-box" :class="type" :role="type==='error'?'alert':'status'" :aria-live="type==='error'?'assertive':'polite'"><text class="toast-icon">{{type==='error'?'!':'✓'}}</text><text>{{$error(message)}}</text></view></transition>
 </template>
 <script setup>
 defineProps({message:{type:String,default:''},type:{type:String,default:'success'}})

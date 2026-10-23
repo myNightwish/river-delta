@@ -4,14 +4,14 @@
   <teleport to="body">
    <view v-if="opened" :id="id" ref="bubble" class="help-bubble" :class="tone" role="tooltip" :style="{left:position.x+'px',top:position.y+'px',visibility:positioned?'visible':'hidden'}" @mouseenter="cancelHide" @mouseleave="scheduleHide">
     <text v-if="text" class="help-copy">{{text}}</text>
-    <view v-for="item in items" :key="item.id" class="help-item"><b>{{item.title}}</b><text>{{item.description}}</text></view>
+    <view v-for="item in items" :key="item.id" class="help-item"><b>{{$t(item.title)}}</b><text>{{$t(item.description)}}</text></view>
    </view>
   </teleport>
  </view>
 </template>
 <script setup>
 import {ref,nextTick,onMounted,onBeforeUnmount} from 'vue'
-defineProps({tone:{type:String,default:''},label:{type:String,default:'查看说明'},text:{type:String,default:''},items:{type:Array,default:()=>[]}})
+defineProps({tone:{type:String,default:''},label:{type:String,default:'ui.more_information'},text:{type:String,default:''},items:{type:Array,default:()=>[]}})
 const anchor=ref(null),bubble=ref(null),opened=ref(false),positioned=ref(false),position=ref({x:12,y:12})
 const id='help-'+Math.random().toString(36).slice(2)
 let hideTimer=null,pinned=false,disposed=false

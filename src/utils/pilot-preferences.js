@@ -1,35 +1,27 @@
 import {MAP_MODES,GOALS,TASKS,SLOT_OPTIONS} from './recruitment-options.js'
-export const PREFERENCES_KEY='pilot-preferences-v2'
+export const PREFERENCES_KEY='pilot-preferences-v3'
 export const DEFAULT_PREFERENCES=Object.freeze({
- schema_version:4,nickname:'',region:'NA',platform:'PC',language:'中文',voice:'开麦',slot:'',slot_explicit:false,
- goal:'',tasks:[],maps:[],helmet:null,armor:null,ammo:null,style:3,
+ schema_version:4,nickname:'',region:'NA',platform:'PC',voice:'voice.mic',slot:'',slot_explicit:false,
+ goal:'',tasks:[],maps:[],helmet:null,armor:null,ammo:null,style:null,style_explicit:false,
  partner_style_min:1,partner_style_max:5,partner_helmet_min:null,partner_armor_min:null,partner_ammo_min:null,
  score_mode:'auto',manual_score:'',confidential_kd:'',top_secret_kd:'',combat_score:'',
  strength_range_mode:'auto',strength_tolerance_percent:30,strength_min:'',strength_max:'',discovery:'browse',public:true,wizard_step:1,
 })
-const choices={region:['NA','EU','SEA','OCE','ME'],platform:['PC','Console','Mobile'],language:['中文','English','日本語'],voice:['开麦','听指挥与标记'],slot:SLOT_OPTIONS,goal:GOALS,score_mode:['auto'],strength_range_mode:['auto','custom','percent'],discovery:['browse','auto']}
+const choices={region:['NA','EU','SEA','OCE','ME'],platform:['PC'],voice:['voice.mic','voice.listen'],slot:SLOT_OPTIONS,goal:GOALS,score_mode:['auto'],strength_range_mode:['auto','custom','percent'],discovery:['browse','auto']}
 const bounds={helmet:[1,6],armor:[1,6],ammo:[1,6],style:[1,5],partner_style_min:[1,5],partner_style_max:[1,5],partner_helmet_min:[1,6],partner_armor_min:[1,6],partner_ammo_min:[1,6],confidential_kd:[0,1000],top_secret_kd:[0,1000],combat_score:[0,1000000],manual_score:[0,1e9],strength_min:[0,1e9],strength_max:[0,2e9],strength_tolerance_percent:[0,100],wizard_step:[1,4]}
 const integers=new Set(['strength_tolerance_percent','helmet','armor','ammo','style','partner_style_min','partner_style_max','partner_helmet_min','partner_armor_min','partner_ammo_min','wizard_step'])
 function fresh(){return {...DEFAULT_PREFERENCES,tasks:[],maps:[]}}
 export function pickPreferences(value){
  const result=fresh()
  if(!value||typeof value!=='object'||Array.isArray(value))return result
- const old=value.schema_version!==4
  const v={...value}
- if(old){
-  v.goal=v.goal==='跑刀'?'卡战备跑刀':v.goal==='任务'?'33任务':v.goal==='主动交战'?'猛攻':v.goal==='搜集撤离'?'搜打撤':v.goal
-  v.tasks=v.task&&TASKS.includes(v.task)?[v.task]:[]
-  if(v.map&&MAP_MODES[v.map])v.maps=[{map:v.map,difficulty:MAP_MODES[v.map].includes(v.difficulty)?v.difficulty:MAP_MODES[v.map][0]}]
-  if(Number.isInteger(v.partner_style)){v.partner_style_min=v.partner_style;v.partner_style_max=v.partner_style}
-  v.partner_armor_min=v.armor;v.partner_ammo_min=v.ammo
-  if(v.strength_min!==''&&v.strength_max!==''&&v.strength_min!=null&&v.strength_max!=null)v.strength_range_mode='custom'
- }
+
  for(const key of Object.keys(result)){
   const n=v[key]
   if(choices[key]){if(choices[key].includes(n))result[key]=n}
   else if(bounds[key]){const [lo,hi]=bounds[key];if(Number.isFinite(n)&&n>=lo&&n<=hi&&(!integers.has(key)||Number.isInteger(n)))result[key]=n;else if((n===''||n===null)&&key!=='strength_tolerance_percent')result[key]=n}
   else if(key==='nickname'&&typeof n==='string')result[key]=n.slice(0,24)
-  else if((key==='public'||key==='slot_explicit')&&typeof n==='boolean')result[key]=n
+  else if((key==='public'||key==='slot_explicit'||key==='style_explicit')&&typeof n==='boolean')result[key]=n
  }
  if(Array.isArray(v.tasks))result.tasks=[...new Set(v.tasks.filter(t=>TASKS.includes(t)))].slice(0,8)
  if(Array.isArray(v.maps)){
@@ -37,15 +29,20 @@ export function pickPreferences(value){
   result.maps=v.maps.filter(m=>m&&MAP_MODES[m.map]&&!seen.has(m.map)&&seen.add(m.map)).slice(0,6).map(m=>({map:m.map,difficulty:MAP_MODES[m.map].includes(m.difficulty)?m.difficulty:''}))
  }
  if(!result.slot_explicit)result.slot=''
+ if(!result.style_explicit)result.style=null
+ result.strength_range_mode='auto'
+ result.strength_tolerance_percent=30
+ result.strength_min=''
+ result.strength_max=''
  result.schema_version=4
  result.wizard_step=Number.isInteger(result.wizard_step)?result.wizard_step:1
  return result
 }
-export function loadPreferences(storage){try{const raw=storage.getStorageSync(PREFERENCES_KEY)||storage.getStorageSync('pilot-preferences-v1');const value=typeof raw==='string'&&raw?JSON.parse(raw):raw;const found=!!value&&typeof value==='object'&&!Array.isArray(value);return {values:pickPreferences(value),found}}catch{return {values:fresh(),found:false}}}
+export function loadPreferences(storage){try{const raw=storage.getStorageSync(PREFERENCES_KEY);const value=typeof raw==='string'&&raw?JSON.parse(raw):raw;const found=!!value&&typeof value==='object'&&!Array.isArray(value);return {values:pickPreferences(value),found}}catch{return {values:fresh(),found:false}}}
 export function savePreferencesDetailed(storage,value){
  let normalized
- try{normalized=pickPreferences(value)}catch(e){return {ok:false,stage:'data',errorName:e?.name||'Error',reason:e?.message||'数据处理失败',message:'草稿暂未保存，仍可继续填写'}}
+ try{normalized=pickPreferences(value)}catch(e){return {ok:false,stage:'data',errorName:e?.name||'Error',reason:e?.message||'normalization_failed',message:'ui.draft_could_not_be_saved_you_can_keep_editing'}}
  try{storage.setStorageSync(PREFERENCES_KEY,normalized);return {ok:true}}
- catch(e){const name=e?.name||'Error';return {ok:false,stage:'storage',errorName:name,reason:e?.errMsg||e?.message||'本地写入失败',message:name==='QuotaExceededError'?'浏览器存储空间不足，草稿暂未保存':name==='SecurityError'?'浏览器限制了本地存储，草稿暂未保存':'草稿暂未保存，刷新后可能需要重新填写'}}
+ catch(e){const name=e?.name||'Error';return {ok:false,stage:'storage',errorName:name,reason:e?.errMsg||e?.message||'storage_write_failed',message:name==='QuotaExceededError'?'ui.browser_storage_is_full_draft_could_not_be_saved':name==='SecurityError'?'ui.browser_storage_is_restricted_draft_could_not_be_saved':'ui.draft_could_not_be_saved_refreshing_may_lose_your'}}
 }
 export function savePreferences(storage,value){return savePreferencesDetailed(storage,value).ok}

@@ -36,16 +36,15 @@ test('calendar aligns weekdays and handles leap years and year boundaries',()=>{
   assert.ok(cells.filter(v=>v.date).every(v=>v.date.startsWith(year+'-'+String(month+1).padStart(2,'0'))))
  }
 })
-test('activity validation arrays produce actionable messages without exposing raw request input',()=>{
- const detail=[{type:'value_error',loc:['body'],msg:'Value error, 请选择 5 分钟至 30 天内的开始时间',input:{token:'never-show-this'}},{type:'greater_than_equal',loc:['body','capacity'],ctx:{ge:2}}]
- const result=operationsErrorMessage(422,{detail})
- assert.ok(result.includes('请选择 5 分钟至 30 天内的开始时间'));assert.ok(result.includes('预约人数不能小于 2'));assert.ok(!result.includes('never-show-this'))
- assert.equal(operationsErrorMessage(422,{detail:[{type:'string_too_short',loc:['body','title'],ctx:{min_length:2}}]}),'活动名称至少填写 2 个字')
- assert.equal(operationsErrorMessage(422,{detail:[{type:'int_parsing',loc:['body','duration_minutes']}]}),'时长请填写整数')
+test('activity validation errors identify fields and never expose request inputs',()=>{
+ const result=operationsErrorMessage(422,{detail:[{type:'greater_than_equal',loc:['body','capacity'],ctx:{ge:2},input:{token:'never-show-this'}}]})
+ assert.equal(result,'validation.field.capacity');assert.ok(!result.includes('never-show-this'))
+ assert.equal(operationsErrorMessage(422,{detail:[{type:'string_too_short',loc:['body','title'],ctx:{min_length:2}}]}),'validation.field.title')
+ assert.equal(operationsErrorMessage(422,{detail:[{type:'int_parsing',loc:['body','duration_minutes']}]}),'validation.field.duration_minutes')
 })
-test('business, rate limit and unavailable service errors have visible safe messages',()=>{
- assert.equal(operationsErrorMessage(400,{detail:'最多同时开放 20 场活动'}),'最多同时开放 20 场活动')
- assert.equal(operationsErrorMessage(429,{detail:{message:'请在 30 秒后重试'}}),'请在 30 秒后重试')
- assert.ok(operationsErrorMessage(403,{}).includes('密钥未通过验证'))
- assert.equal(operationsErrorMessage(500,{detail:'private stack trace'}),'服务暂时不可用，请稍后重试')
+test('business errors and unavailable service errors return semantic message keys',()=>{
+ assert.equal(operationsErrorMessage(400,{detail:'ui.at_most_20_events_can_be_open_at_once'}),'ui.at_most_20_events_can_be_open_at_once')
+ assert.equal(operationsErrorMessage(429,{error_code:'error.rateLimited'}),'error.rateLimited')
+ assert.equal(operationsErrorMessage(403,{}),'error.forbidden')
+ assert.equal(operationsErrorMessage(500,{detail:'private stack trace'}),'error.unavailable')
 })

@@ -1,54 +1,41 @@
 <template>
   <view>
-    <view class="hall-head"><view><view class="title">{{recommended?'适合我的队友':'全部公开招募'}}</view></view><view class="hall-actions"><button class="change" :disabled="busy || !waiting || !items.length" @click="$emit('skip')">换一批</button><button @click="$emit('refresh')" :disabled="busy">刷新</button></view></view>
-    <view class="caption hall-caption"><text class="candidate-count">{{total}} 位候选 · 正在招募</text><slot name="status"/></view>
-    <view class="controls"><button :class="{selected:recommended}" @click="$emit('mode',true)">适合我的</button><button :class="{selected:!recommended}" @click="$emit('mode',false)">全部公开</button></view>
-    <view v-if="!canRecommend" class="hint">先浏览，找到合适的队友后发布你的条件</view>
-    <view v-if="!items.length" class="empty"><b>{{recommended?'暂时没有符合条件的队友':'暂时没有公开招募'}}</b><view class="empty-note">{{recommended?'查看其他招募，或调整招募条件':'稍后刷新，或设置招募条件'}}</view><view class="empty-actions"><button v-if="recommended" class="empty-primary" @click="$emit('mode',false)">查看全部招募</button><button :class="recommended?'empty-secondary':'empty-primary'" @click="$emit('edit')">{{canRecommend?'调整招募条件':'设置招募条件'}}</button></view></view>
+    <view class="hall-head"><view><view class="title">{{recommended?$t("ui.compatible_teammates"):$t("ui.all_public_listings")}}</view></view><view class="hall-actions"><button class="change" :disabled="busy || !waiting || !items.length" @click="$emit('skip')">{{ $t("ui.show_others") }}</button><button @click="$emit('refresh')" :disabled="busy">{{ $t("action.refresh") }}</button></view></view>
+    <view class="caption hall-caption"><text class="candidate-count">{{$t('message.candidateCount',{count:total})}}</text><slot name="status"/></view>
+    <view class="controls"><button :class="{selected:recommended}" @click="$emit('mode',true)">{{ $t("ui.compatible") }}</button><button :class="{selected:!recommended}" @click="$emit('mode',false)">{{ $t("ui.all_public") }}</button></view>
+    <view v-if="!canRecommend" class="hint">{{ $t("ui.browse_first_then_publish_your_conditions_when_you_find") }}</view>
+    <view v-if="!items.length" class="empty"><b>{{recommended?$t("ui.no_compatible_teammates_yet"):$t("ui.no_public_listings_yet")}}</b><view class="empty-note">{{recommended?$t("ui.browse_other_listings_or_adjust_your_conditions"):$t("ui.refresh_later_or_set_up_your_listing")}}</view><view class="empty-actions"><button v-if="recommended" class="empty-primary" @click="$emit('mode',false)">{{ $t("ui.view_all_listings") }}</button><button :class="recommended?'empty-secondary':'empty-primary'" @click="$emit('edit')">{{canRecommend?$t("ui.adjust_conditions"):$t("ui.set_conditions")}}</button></view></view>
     <view class="cards">
       <view v-for="c in items" :key="c.id" class="candidate">
-        <view class="card-top"><view class="player-name"><text v-if="c.profile.is_demo" class="demo-badge">测试</text><b :title="c.profile.nickname">{{c.profile.is_demo?c.profile.nickname.replace(/^【测试】/,''):c.profile.nickname}}</b></view><text class="goal-tag">{{c.profile.goal}}</text></view>
-        <view class="context-tags"><text v-for="pair in (c.profile.maps||[{map:c.profile.map,difficulty:c.profile.difficulty}])" :key="pair.map" class="context-tag">{{pair.map}} · {{pair.difficulty}}</text><text class="context-tag">{{c.profile.region}}</text><text class="context-tag">{{platformNames[c.profile.platform]||c.profile.platform}}</text></view>
-        <view class="facts"><view v-for="row in profileRows(c.profile)" :key="row.key" class="fact-row"><text class="fact-label">{{row.label}}</text><view class="tag-list"><text v-for="tag in row.tags" :key="tag" class="info-tag" :class="{accent:row.key==='partner'}">{{tag}}</text></view></view></view>
-        <view v-if="c.assessment" class="checks"><text v-for="check in c.assessment.checks" :key="check.label" class="check-tag" :class="{conflict:!check.ok}" :title="check.label" :aria-label="(check.ok?'符合：':'不符合：')+check.label"><text class="check-icon">{{check.ok?'✓':'×'}}</text>{{checkNames[check.label]||check.label}}</text><text v-for="conflict in c.assessment.hard_conflicts" :key="conflict" class="check-tag conflict" :title="conflict"><text class="check-icon">×</text>{{conflict.replace(/不一致$/,'')}}</text></view>
-        <button class="invite" :disabled="busy || !c.can_invite" @click="$emit('invite',c.id)">{{c.can_invite?'申请组队':myStatus==='matched'?'已有待确认队友':myStatus==='expired'?'重新发布后可申请':myStatus!=='waiting'?'先发布招募条件':'条件不符'}}</button>
+        <view class="card-top"><view class="player-name"><text v-if="c.profile.is_demo" class="demo-badge">{{ $t("ui.test") }}</text><b :title="c.profile.nickname">{{c.profile.is_demo?c.profile.nickname.replace(/^【测试】/,''):c.profile.nickname}}</b></view><text class="goal-tag">{{$t(c.profile.goal)}}</text></view>
+        <view class="context-tags"><text v-for="pair in (c.profile.maps||[{map:c.profile.map,difficulty:c.profile.difficulty}])" :key="pair.map" class="context-tag">{{$t(pair.map)}} · {{$t(pair.difficulty)}}</text><text class="context-tag">{{c.profile.region}}</text><text class="context-tag">{{$t(platformNames[c.profile.platform]||c.profile.platform)}}</text></view>
+        <view class="facts"><view v-for="row in profileRows(c.profile)" :key="row.key" class="fact-row"><text class="fact-label">{{$t(row.label)}}</text><view class="tag-list"><text v-for="tag in row.tags" :key="tag" class="info-tag" :class="{accent:row.key==='partner'}">{{tag}}</text></view></view></view>
+        <view v-if="c.assessment" class="checks"><text v-for="check in c.assessment.checks" :key="check.label" class="check-tag" :class="{conflict:!check.ok}" :title="$t(check.label)" :aria-label="(check.ok?$t(&quot;ui.meets&quot;):$t(&quot;ui.does_not_meet&quot;))+$t(check.label)"><text class="check-icon">{{check.ok?'✓':'×'}}</text>{{$t(checkNames[check.label]||check.label)}}</text><text v-for="conflict in c.assessment.hard_conflicts" :key="conflict" class="check-tag conflict" :title="$t(conflict)"><text class="check-icon">×</text>{{$t(conflict)}}</text></view>
+        <button class="invite" :disabled="busy || !c.can_invite" @click="$emit('invite',c.id)">{{c.can_invite?$t("ui.request_to_team_up"):myStatus==='matched'?$t("ui.a_teammate_is_awaiting_confirmation"):myStatus==='expired'?$t("ui.publish_again_to_apply"):myStatus!=='waiting'?$t("ui.publish_your_conditions_first"):$t("ui.requirements_not_met")}}</button>
       </view>
     </view>
-    <view class="pagination"><button :disabled="page===0 || busy" @click="$emit('page',page-1)">上一页</button><text>第 {{page+1}} 页</text><button :disabled="(page+1)*6>=total || busy" @click="$emit('page',page+1)">下一页</button></view>
+    <view class="pagination"><button :disabled="page===0 || busy" @click="$emit('page',page-1)">{{ $t("ui.previous") }}</button><text>{{$t('message.pageNumber',{page:page+1})}}</text><button :disabled="(page+1)*6>=total || busy" @click="$emit('page',page+1)">{{ $t("ui.next") }}</button></view>
 
   </view>
 </template>
 <script setup>
+import {t,formatNumber} from '../i18n/index.js'
 defineProps({items:{type:Array,default:()=>[]},total:Number,page:Number,recommended:Boolean,canRecommend:Boolean,busy:Boolean,waiting:Boolean,myStatus:String})
 defineEmits(['refresh','mode','edit','invite','page','skip'])
-const ranks=['青铜','白银','黄金','白金','钻石','黑鹰','巅峰']
-const platformNames={PC:'电脑端',Console:'主机端',Mobile:'手机端'}
-const styleNames=['很保守','偏保守','均衡','偏激进','很激进']
-const checkNames={'本局目标一致':'目标','装备预算有交集':'预算','装备等级一致':'装备','任务类型一致':'任务','地图与难度有交集':'战场','有共同任务':'任务','对方装备达到我的门槛':'我接受对方装备','我的装备达到对方门槛':'对方接受我装备','对方实力在我接受范围内':'我接受对方实力','我的实力在对方接受范围内':'对方接受我实力','对方实力符合我的范围':'我接受对方实力','我的实力符合对方范围':'对方接受我实力','对方打法符合我的期望':'我接受对方打法','我的打法符合对方期望':'对方接受我打法'}
-const score=value=>new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(value)
+const ranks=['ui.bronze','ui.silver','ui.gold','ui.platinum','ui.diamond','ui.black_hawk','ui.pinnacle']
+const platformNames={PC:'ui.pc',Console:'ui.console',Mobile:'ui.mobile'}
+const styleNames=['ui.very_cautious','ui.cautious','ui.balanced','ui.aggressive','ui.very_aggressive']
+const checkNames={'ui.same_session_goal':'ui.goal_342','ui.compatible_gear_budgets':'ui.budget','ui.compatible_gear_levels':'profile.gearLabel','ui.same_mission_type':'recruitment.tasks','ui.shared_map_and_difficulty':'ui.map_341','ui.shared_missions_355':'recruitment.tasks','ui.their_gear_meets_your_minimum_356':'ui.their_gear_meets_your_minimum','ui.your_gear_meets_their_minimum_357':'ui.your_gear_meets_their_minimum','ui.their_skill_fits_your_range_358':'ui.their_skill_fits_your_range','ui.your_skill_fits_their_range_359':'ui.your_skill_fits_their_range','ui.their_skill_fits_your_range_360':'ui.their_skill_fits_your_range','ui.your_skill_fits_their_range_361':'ui.your_skill_fits_their_range','ui.their_playstyle_fits_your_range_362':'ui.their_playstyle_fits_your_range','ui.your_playstyle_fits_their_range_363':'ui.your_playstyle_fits_their_range'}
+const score=value=>formatNumber(value)
 function profileRows(p){
- if(p.schema_version===4){
-  const rows=[]
-  if(p.goal==='33任务'&&p.tasks.length)rows.push({key:'tasks',label:'任务',tags:p.tasks})
-  if(p.goal!=='卡战备跑刀')rows.push({key:'equipment',label:'装备',tags:['头 '+p.helmet,'甲 '+p.armor,'弹 '+p.ammo]})
-  rows.push({key:'self',label:'自身',tags:['实力 '+score(p.strength_score),p.style+' · '+styleNames[p.style-1]]})
-  rows.push({key:'partner',label:'队友',tags:['实力 '+score(p.strength_min)+'–'+score(p.strength_max),'打法 '+p.partner_style_min+'–'+p.partner_style_max]})
-  if(p.goal!=='卡战备跑刀')rows.push({key:'requirements',label:'门槛',tags:['头 ≥'+p.partner_helmet_min,'甲 ≥'+p.partner_armor_min,'弹 ≥'+p.partner_ammo_min]})
-  rows.push({key:'communication',label:'沟通',tags:[p.language,p.voice,p.slot]})
-  return rows
- }
-
- const current=p.strength_score!==undefined && p.strength_score!==null
  const rows=[]
- const gear=[]
- if(p.goal==='33任务' && p.task)gear.push(p.task)
- if(p.goal!=='跑刀' && p.armor!=null)gear.push(p.armor+' 级甲')
- if(p.goal!=='跑刀' && p.ammo!=null)gear.push(p.ammo+' 级弹')
- if(!current && p.budget_min!=null)gear.push('预算 '+p.budget_min+'–'+p.budget_max+' 万')
- if(gear.length)rows.push({key:'session',label:'本局',tags:gear})
- rows.push({key:'self',label:'自身',tags:current?['实力 '+score(p.strength_score),p.style+' · '+(styleNames[p.style-1]||'')]:[ranks[p.rank-1]||'段位未填','自评 '+p.skill+' 档']})
- if(current)rows.push({key:'partner',label:'队友',tags:['实力 '+score(p.strength_min)+'–'+score(p.strength_max),p.partner_style+' · '+(styleNames[p.partner_style-1]||'')]})
- rows.push({key:'communication',label:'沟通',tags:[p.language,p.voice,p.slot].filter(Boolean)})
+ const number=value=>value==null?t('common.notEntered'):formatNumber(value)
+ if(p.goal==='goal.missions'&&(p.tasks||[]).length)rows.push({key:'tasks',label:'recruitment.tasks',tags:p.tasks.map(value=>t(value))})
+ if(p.goal!=='goal.budget_run')rows.push({key:'equipment',label:'profile.gearLabel',tags:['helmet','armor','ammo'].filter(key=>p[key]!=null).map(key=>t('gear.value',{gear:t('gear.'+key),value:p[key]}))})
+ rows.push({key:'self',label:'profile.selfLabel',tags:[t('profile.skillValue',{score:number(p.strength_score)}),t('profile.styleOption',{value:p.style,label:t(styleNames[p.style-1]||'common.notEntered')})]})
+ rows.push({key:'partner',label:'profile.partnerLabel',tags:[t('partner.skillValue',{min:number(p.strength_min),max:number(p.strength_max)}),t('partner.styleValue',{min:p.partner_style_min??p.partner_style,max:p.partner_style_max??p.partner_style})]})
+ if(p.goal!=='goal.budget_run')rows.push({key:'requirements',label:'profile.requirements',tags:['helmet','armor','ammo'].filter(key=>p['partner_'+key+'_min']!=null).map(key=>t('gear.minimum',{gear:t('gear.'+key),value:p['partner_'+key+'_min']}))})
+ rows.push({key:'communication',label:'profile.communication',tags:[p.language,p.voice,p.slot].filter(Boolean).map(value=>t(value))})
  return rows
 }
 

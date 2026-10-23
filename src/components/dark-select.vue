@@ -1,18 +1,21 @@
 <template>
   <view class="dropdown" @keydown.esc.stop="close" @keydown.down.prevent="move(1)" @keydown.up.prevent="move(-1)" @keydown.enter.prevent.stop="open ? select(options[cursor]) : toggle()">
-    <button type="button" class="trigger" :class="{opened:open,invalid}" :aria-invalid="invalid||undefined" :aria-label="label+'：'+displayLabel(modelValue)" aria-haspopup="listbox" :aria-expanded="open" @click="toggle"><text>{{displayLabel(modelValue)}}</text><text class="chevron">⌄</text></button>
+    <button type="button" class="trigger" :class="{opened:open,invalid}" :aria-invalid="invalid||undefined" :aria-label="displayText(label)+': '+displayLabel(modelValue)" aria-haspopup="listbox" :aria-expanded="open" @click="toggle"><text>{{displayLabel(modelValue)}}</text><text class="chevron">⌄</text></button>
     <view v-if="open" class="dismiss" @click="close"/>
-    <view v-if="open" class="menu" role="listbox" :aria-label="label">
-      <view class="menu-label">{{label}}</view>
+    <view v-if="open" class="menu" role="listbox" :aria-label="displayText(label)">
+      <view class="menu-label">{{displayText(label)}}</view>
       <button v-for="(option,index) in options" :key="option" type="button" role="option" :aria-selected="modelValue===option" class="option" :class="{selected:modelValue===option,focused:cursor===index}" @mouseenter="cursor=index" @click="select(option)"><text>{{displayLabel(option)}}</text><text class="check">{{modelValue===option?'✓':''}}</text></button>
     </view>
   </view>
 </template>
 <script setup>
 import {ref} from 'vue'
-const props=defineProps({modelValue:{type:String,default:''},invalid:{type:Boolean,default:false},options:{type:Array,default:()=>[]},label:{type:String,default:'请选择'},placeholder:{type:String,default:'请选择'},optionLabels:{type:Object,default:()=>({})}})
+import {t} from '../i18n/index.js'
+import {hasMessage} from '../i18n/core.js'
+const props=defineProps({modelValue:{type:String,default:''},invalid:{type:Boolean,default:false},options:{type:Array,default:()=>[]},label:{type:String,default:'ui.select'},placeholder:{type:String,default:'ui.select'},optionLabels:{type:Object,default:()=>({})}})
 const emit=defineEmits(['update:modelValue'])
-const displayLabel=value=>value===''||value==null?props.placeholder:(props.optionLabels[value]||value)
+const displayText=value=>hasMessage(value)?t(value):String(value??'')
+const displayLabel=value=>value===''||value==null?displayText(props.placeholder):displayText(props.optionLabels[value]||value)
 const open=ref(false),cursor=ref(0)
 function close(){open.value=false}
 function toggle(){open.value=!open.value;cursor.value=Math.max(0,props.options.indexOf(props.modelValue))}
